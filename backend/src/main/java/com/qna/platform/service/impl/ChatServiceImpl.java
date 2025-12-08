@@ -27,17 +27,20 @@ public class ChatServiceImpl implements ChatService {
     private final ApiConfigMapper apiConfigMapper;
     private final SysUserMapper userMapper;
     private final AiApiClient aiApiClient;
+    private final com.qna.platform.util.ComplianceClient complianceClient;
 
     public ChatServiceImpl(ChatSessionMapper sessionMapper,
                           ChatMessageMapper messageMapper,
                           ApiConfigMapper apiConfigMapper,
                           SysUserMapper userMapper,
-                          AiApiClient aiApiClient) {
+                          AiApiClient aiApiClient,
+                          com.qna.platform.util.ComplianceClient complianceClient) {
         this.sessionMapper = sessionMapper;
         this.messageMapper = messageMapper;
         this.apiConfigMapper = apiConfigMapper;
         this.userMapper = userMapper;
         this.aiApiClient = aiApiClient;
+        this.complianceClient = complianceClient;
     }
 
     @Override
@@ -95,6 +98,9 @@ public class ChatServiceImpl implements ChatService {
         userMessage.setContent(requestDTO.getMessage());
         userMessage.setComplianceStatus(ComplianceStatus.UNCHECKED.name());
         messageMapper.insert(userMessage);
+        
+        // 对用户消息进行合规检测（异步）
+        checkMessageCompliance(userMessage);
 
         // 获取会话历史（最近10条）
         List<Map<String, String>> messages = buildMessageHistory(session.getId());
@@ -118,6 +124,9 @@ public class ChatServiceImpl implements ChatService {
             assistantMessage.setResponseTime((int) responseTime);
             assistantMessage.setComplianceStatus(ComplianceStatus.UNCHECKED.name());
             messageMapper.insert(assistantMessage);
+            
+            // 对AI回复进行合规检测（异步）
+            checkMessageCompliance(assistantMessage);
 
             // 更新会话消息数量
             session.setMessageCount(session.getMessageCount() + 2);
@@ -227,5 +236,30 @@ public class ChatServiceImpl implements ChatService {
         }
 
         return result;
+    }
+    
+    /**
+     * 检测消息合规性
+     * 
+     * @param message 待检测的消息
+     */
+    private void checkMessageCompliance(ChatMessage message) {
+        try {
+            // 调用Python合规检测服务
+            cn.hutool.json.JSONObject result = complianceClient.checkContent(message.getContent());
+            
+            // 更新消息的合规状态
+            String complianceResult = result.getStr("result", "PASS");
+            message.setComplianceStatus(complianceResult);
+            message.setComplianceResult(result.toString());
+            
+            // 更新到数据库
+            messageMapper.updateById(message);
+            
+        } catch (Exception e) {
+            // 检测失败时，保持未检测状态
+            org.slf4j.LoggerFactory.getLogger(getClass())
+                    .error("合规检测失败: messageId={}, error={}", message.getId(), e.getMessage());
+        }
     }
 }
