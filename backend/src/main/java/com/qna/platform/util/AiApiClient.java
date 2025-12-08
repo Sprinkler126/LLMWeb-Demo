@@ -51,6 +51,7 @@ public class AiApiClient {
         if (apiConfig.getApiKey() != null && !apiConfig.getApiKey().isEmpty()) {
             switch (apiConfig.getProvider().toUpperCase()) {
                 case "OPENAI":
+                case "DEEPSEEK":  // DeepSeek兼容OpenAI格式
                     requestBuilder.addHeader("Authorization", "Bearer " + apiConfig.getApiKey());
                     break;
                 case "ANTHROPIC":
@@ -112,6 +113,7 @@ public class AiApiClient {
 
         switch (apiConfig.getProvider().toUpperCase()) {
             case "OPENAI":
+            case "DEEPSEEK":  // DeepSeek兼容OpenAI格式
             case "LOCAL":
                 // 只有当模型名称不在URL中时，才添加到请求体
                 if (!modelInUrl) {
@@ -167,6 +169,7 @@ public class AiApiClient {
 
         switch (provider.toUpperCase()) {
             case "OPENAI":
+            case "DEEPSEEK":  // DeepSeek使用OpenAI响应格式
             case "LOCAL":
                 return jsonResponse.getByPath("choices[0].message.content", String.class);
 

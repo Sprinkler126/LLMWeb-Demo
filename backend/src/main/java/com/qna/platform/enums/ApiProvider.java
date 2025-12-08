@@ -32,6 +32,11 @@ public enum ApiProvider {
     BAIDU("Baidu"),
     
     /**
+     * DeepSeek
+     */
+    DEEPSEEK("DeepSeek"),
+    
+    /**
      * 本地模型
      */
     LOCAL("Local"),

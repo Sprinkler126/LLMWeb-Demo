@@ -50,6 +50,7 @@
             <el-option label="OpenAI" value="OpenAI" />
             <el-option label="Anthropic" value="Anthropic" />
             <el-option label="Google" value="Google" />
+            <el-option label="DeepSeek" value="DeepSeek" />
             <el-option label="Aliyun" value="Aliyun" />
             <el-option label="Baidu" value="Baidu" />
             <el-option label="Local" value="Local" />
