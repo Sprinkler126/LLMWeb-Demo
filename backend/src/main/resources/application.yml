@@ -1,0 +1,84 @@
+spring:
+  application:
+    name: qna-platform
+  
+  # 数据源配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/qna_platform?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: root
+    password: root123456
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      connection-timeout: 30000
+
+  # Jackson配置
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+    serialization:
+      write-dates-as-timestamps: false
+
+  # 文件上传配置
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+
+# MyBatis Plus配置
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+  mapper-locations: classpath*:/mapper/**/*.xml
+
+# 服务器配置
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+# JWT配置
+jwt:
+  secret: QnAPlatformSecretKey2024ForJWTTokenGenerationAndValidation
+  expiration: 86400000  # 24小时（毫秒）
+  header: Authorization
+  prefix: Bearer 
+
+# 应用配置
+app:
+  # 合规检测服务配置
+  compliance:
+    service-url: http://localhost:5000/api/compliance/check
+    timeout: 30000
+  
+  # 导出配置
+  export:
+    temp-dir: ./temp/export
+    max-records: 10000
+  
+  # API调用配置
+  api:
+    default-timeout: 30000
+    max-retries: 3
+
+# 日志配置
+logging:
+  level:
+    com.qna.platform: debug
+    org.springframework: info
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{50} - %msg%n"
+  file:
+    name: logs/qna-platform.log
+    max-size: 100MB
+    max-history: 30

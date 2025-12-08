@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  # MySQL数据库
+  mysql:
+    image: mysql:8.0
+    container_name: qna-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root123456
+      MYSQL_DATABASE: qna_platform
+      MYSQL_USER: qnauser
+      MYSQL_PASSWORD: qna123456
+      TZ: Asia/Shanghai
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    command: --default-authentication-plugin=mysql_native_password
+    networks:
+      - qna-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Spring Boot后端
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: qna-backend
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/qna_platform?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root123456
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - qna-network
+    restart: unless-stopped
+
+  # Vue3前端
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: qna-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - qna-network
+    restart: unless-stopped
+
+  # Python合规检测服务（可选）
+  compliance-service:
+    build:
+      context: ./compliance-service
+      dockerfile: Dockerfile
+    container_name: qna-compliance
+    ports:
+      - "5000:5000"
+    networks:
+      - qna-network
+    restart: unless-stopped
+    profiles:
+      - with-compliance
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  qna-network:
+    driver: bridge
