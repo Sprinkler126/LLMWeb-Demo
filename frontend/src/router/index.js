@@ -69,7 +69,7 @@ router.beforeEach((to, from, next) => {
   } else if (to.meta.requiresPermission && !userStore.hasCompliancePermission) {
     ElMessage.warning('您没有合规检测权限')
     next(from.path)
-  } else if (to.meta.requiresAdmin && userStore.role !== 'ADMIN') {
+  } else if (to.meta.requiresAdmin && !userStore.isAdmin) {
     ElMessage.warning('您没有管理员权限')
     next(from.path)
   } else {
