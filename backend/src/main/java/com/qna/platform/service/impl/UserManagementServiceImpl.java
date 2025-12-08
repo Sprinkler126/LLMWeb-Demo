@@ -5,7 +5,7 @@ import com.qna.platform.dto.UserManagementDTO;
 import com.qna.platform.entity.SysRole;
 import com.qna.platform.entity.SysUser;
 import com.qna.platform.mapper.RoleMapper;
-import com.qna.platform.mapper.UserMapper;
+import com.qna.platform.mapper.SysUserMapper;
 import com.qna.platform.service.UserManagementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -24,7 +24,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserManagementServiceImpl implements UserManagementService {
     
-    private final UserMapper userMapper;
+    private final SysUserMapper userMapper;
     private final RoleMapper roleMapper;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     
