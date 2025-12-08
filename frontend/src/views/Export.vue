@@ -67,7 +67,9 @@ const loadSessions = async () => {
 const exportSession = (sessionId, format) => {
   // 携带 token 到 URL
   const token = userStore.token
-  const url = `${import.meta.env.VITE_API_BASE_URL || '/api'}/export/session/${sessionId}/${format}?token=${token}`
+  // window.open 不会经过 Vite 代理，需要使用完整的后端 URL
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'
+  const url = `${baseUrl}/export/session/${sessionId}/${format}?token=${token}`
   window.open(url, '_blank')
   ElMessage.success('开始导出...')
 }
@@ -75,7 +77,9 @@ const exportSession = (sessionId, format) => {
 const exportAll = () => {
   // 携带 token 到 URL
   const token = userStore.token
-  const url = `${import.meta.env.VITE_API_BASE_URL || '/api'}/export/all/${exportFormat.value}?token=${token}`
+  // window.open 不会经过 Vite 代理，需要使用完整的后端 URL
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'
+  const url = `${baseUrl}/export/all/${exportFormat.value}?token=${token}`
   window.open(url, '_blank')
   ElMessage.success('开始导出...')
 }
