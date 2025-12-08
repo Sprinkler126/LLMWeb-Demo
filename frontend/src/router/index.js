@@ -64,17 +64,38 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
   
+  // 如果需要认证但未登录，跳转到登录页
   if (to.meta.requiresAuth && !userStore.token) {
     next('/login')
-  } else if (to.meta.requiresPermission && !userStore.hasCompliancePermission) {
-    ElMessage.warning('您没有合规检测权限')
-    next(from.path)
-  } else if (to.meta.requiresAdmin && !userStore.isAdmin) {
-    ElMessage.warning('您没有管理员权限')
-    next(from.path)
-  } else {
-    next()
+    return
   }
+  
+  // 如果需要合规检测权限但没有该权限
+  if (to.meta.requiresPermission && !userStore.hasCompliancePermission) {
+    // 防止重复导航到同一路径
+    if (from.path !== to.path) {
+      const { ElMessage } = await import('element-plus')
+      ElMessage.warning('您没有合规检测权限')
+    }
+    // 如果 from 是空的（首次访问），跳转到首页
+    next(from.path || '/chat')
+    return
+  }
+  
+  // 如果需要管理员权限但不是管理员
+  if (to.meta.requiresAdmin && !userStore.isAdmin) {
+    // 防止重复导航到同一路径
+    if (from.path !== to.path) {
+      const { ElMessage } = await import('element-plus')
+      ElMessage.warning('您没有管理员权限')
+    }
+    // 如果 from 是空的（首次访问），跳转到首页
+    next(from.path || '/chat')
+    return
+  }
+  
+  // 允许访问
+  next()
 })
 
 export default router

@@ -1,18 +1,23 @@
 import { defineStore } from 'pinia'
 
 export const useUserStore = defineStore('user', {
-  state: () => ({
-    token: localStorage.getItem('token') || '',
-    userInfo: JSON.parse(localStorage.getItem('userInfo') || '{}'),
-    userId: null,
-    username: '',
-    nickname: '',
-    role: '',
-    avatar: '',
-    apiQuota: 0,
-    apiUsed: 0,
-    hasCompliancePermission: false
-  }),
+  state: () => {
+    // 从 localStorage 恢复用户信息
+    const savedUserInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
+    
+    return {
+      token: localStorage.getItem('token') || '',
+      userInfo: savedUserInfo,
+      userId: savedUserInfo.userId || null,
+      username: savedUserInfo.username || '',
+      nickname: savedUserInfo.nickname || '',
+      role: savedUserInfo.role || '',
+      avatar: savedUserInfo.avatar || '',
+      apiQuota: savedUserInfo.apiQuota || 0,
+      apiUsed: savedUserInfo.apiUsed || 0,
+      hasCompliancePermission: savedUserInfo.hasCompliancePermission === 1
+    }
+  },
 
   getters: {
     isLogin: (state) => !!state.token,
