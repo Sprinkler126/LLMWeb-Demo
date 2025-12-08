@@ -1,0 +1,45 @@
+# Maven
+backend/target/
+backend/*.jar
+backend/*.war
+backend/*.ear
+backend/.mvn/
+backend/mvnw
+backend/mvnw.cmd
+
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/.DS_Store
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# Python
+compliance-service/__pycache__/
+compliance-service/*.pyc
+compliance-service/.Python
+compliance-service/venv/
+compliance-service/env/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.swp
+*.swo
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+.docker/
+
+# Temp
+temp/
+*.tmp
