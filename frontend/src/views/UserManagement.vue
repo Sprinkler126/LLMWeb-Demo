@@ -11,8 +11,70 @@
         </div>
       </template>
 
+      <!-- 搜索栏 -->
+      <div class="search-bar">
+        <el-form :inline="true">
+          <el-form-item label="用户名">
+            <el-input 
+              v-model="searchForm.username" 
+              placeholder="输入用户名搜索"
+              clearable
+              @clear="handleSearch"
+            />
+          </el-form-item>
+          <el-form-item label="邮箱">
+            <el-input 
+              v-model="searchForm.email" 
+              placeholder="输入邮箱搜索"
+              clearable
+              @clear="handleSearch"
+            />
+          </el-form-item>
+          <el-form-item label="角色">
+            <el-select 
+              v-model="searchForm.roleId" 
+              placeholder="选择角色"
+              clearable
+              @clear="handleSearch"
+              style="width: 150px"
+            >
+              <el-option label="全部" :value="null" />
+              <el-option 
+                v-for="role in roleList" 
+                :key="role.id" 
+                :label="role.roleName" 
+                :value="role.id" 
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="状态">
+            <el-select 
+              v-model="searchForm.status" 
+              placeholder="选择状态"
+              clearable
+              @clear="handleSearch"
+              style="width: 120px"
+            >
+              <el-option label="全部" :value="null" />
+              <el-option label="启用" :value="1" />
+              <el-option label="禁用" :value="0" />
+            </el-select>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" @click="handleSearch">
+              <el-icon><Search /></el-icon>
+              搜索
+            </el-button>
+            <el-button @click="handleReset">
+              <el-icon><Refresh /></el-icon>
+              重置
+            </el-button>
+          </el-form-item>
+        </el-form>
+      </div>
+
       <!-- 用户列表 -->
-      <el-table :data="userList" stripe style="width: 100%" v-loading="loading">
+      <el-table :data="filteredUserList" stripe style="width: 100%" v-loading="loading">
         <el-table-column prop="id" label="用户ID" width="80" />
         <el-table-column prop="username" label="用户名" width="150" />
         <el-table-column prop="email" label="邮箱" width="200" />
@@ -355,5 +417,12 @@ onMounted(() => {
 .header-title {
   font-size: 16px;
   font-weight: 600;
+}
+
+.search-bar {
+  margin-bottom: 20px;
+  padding: 20px;
+  background: #f5f7fa;
+  border-radius: 4px;
 }
 </style>

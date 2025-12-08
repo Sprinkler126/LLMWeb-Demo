@@ -65,13 +65,17 @@ const loadSessions = async () => {
 }
 
 const exportSession = (sessionId, format) => {
-  const url = `/api/export/session/${sessionId}/${format}`
+  // 携带 token 到 URL
+  const token = userStore.token
+  const url = `${import.meta.env.VITE_API_BASE_URL || '/api'}/export/session/${sessionId}/${format}?token=${token}`
   window.open(url, '_blank')
   ElMessage.success('开始导出...')
 }
 
 const exportAll = () => {
-  const url = `/api/export/all/${exportFormat.value}`
+  // 携带 token 到 URL
+  const token = userStore.token
+  const url = `${import.meta.env.VITE_API_BASE_URL || '/api'}/export/all/${exportFormat.value}?token=${token}`
   window.open(url, '_blank')
   ElMessage.success('开始导出...')
 }
