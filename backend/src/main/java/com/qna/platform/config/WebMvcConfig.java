@@ -24,6 +24,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .addPathPatterns("/**")
                 .excludePathPatterns(
                         "/api/auth/**",           // 认证接口
+                        "/api/export/**",         // 导出接口（通过 URL token 验证）
                         "/error",                 // 错误页面
                         "/swagger-ui/**",         // Swagger UI
                         "/v3/api-docs/**"        // API 文档
