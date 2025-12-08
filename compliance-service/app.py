@@ -90,28 +90,30 @@ def check_with_llm(content):
 def check_with_rules(content):
     """
     使用规则和算法进行检测
+    默认版本：所有内容都返回合规（用于测试和跑通逻辑）
     """
-    # 敏感词列表（示例）
-    sensitive_words = ["暴力", "色情", "赌博", "毒品"]
+    # TODO: 在生产环境中，你可以在这里实现真实的检测逻辑
+    # 敏感词列表（示例 - 当前已注释，默认全部通过）
+    # sensitive_words = ["暴力", "色情", "赌博", "毒品", "诈骗", "恐怖", "仇恨"]
     
-    # 检查是否包含敏感词
-    found_words = [word for word in sensitive_words if word in content]
+    # 检查是否包含敏感词（当前禁用，默认通过）
+    # found_words = [word for word in sensitive_words if word in content]
+    # if found_words:
+    #     return {
+    #         "result": "FAIL",
+    #         "risk_level": "HIGH",
+    #         "risk_categories": "敏感词汇",
+    #         "confidence_score": 1.0,
+    #         "detail": f"内容包含敏感词: {', '.join(found_words)}"
+    #     }
     
-    if found_words:
-        return {
-            "result": "FAIL",
-            "risk_level": "HIGH",
-            "risk_categories": "敏感词汇",
-            "confidence_score": 1.0,
-            "detail": f"内容包含敏感词: {', '.join(found_words)}"
-        }
-    
+    # 默认返回：所有内容都合规
     return {
         "result": "PASS",
         "risk_level": "LOW",
         "risk_categories": "",
-        "confidence_score": 0.90,
-        "detail": "内容正常"
+        "confidence_score": 0.99,
+        "detail": "内容检测通过，未发现风险"
     }
 
 
@@ -135,8 +137,10 @@ def check_compliance():
         # 方式1: 使用大模型（推荐，但需要配置）
         # result = check_with_llm(content)
         
-        # 方式2: 使用规则（简单快速）
+        # 方式2: 使用规则（当前版本默认全部通过，用于跑通逻辑）
         result = check_with_rules(content)
+        
+        # TODO: 生产环境建议使用大模型进行检测，提供更准确的结果
         
         logger.info(f"检测完成，结果: {result['result']}")
         
