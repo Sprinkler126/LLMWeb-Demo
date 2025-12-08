@@ -190,8 +190,14 @@ INSERT INTO `sys_config` (`config_key`, `config_value`, `config_type`, `descript
 ('DEFAULT_API_QUOTA', '100', 'NUMBER', '默认API调用配额');
 
 -- 插入示例API配置
+-- 标准模式：模型名称在请求体中
 INSERT INTO `api_config` (`config_name`, `provider`, `model_name`, `api_endpoint`, `api_type`, `max_tokens`, `temperature`, `status`, `created_by`) VALUES
 ('OpenAI GPT-4', 'OpenAI', 'gpt-4', 'https://api.openai.com/v1/chat/completions', 'ONLINE', 2000, 0.7, 0, 1),
 ('OpenAI GPT-3.5', 'OpenAI', 'gpt-3.5-turbo', 'https://api.openai.com/v1/chat/completions', 'ONLINE', 2000, 0.7, 0, 1),
 ('Anthropic Claude', 'Anthropic', 'claude-3-opus', 'https://api.anthropic.com/v1/messages', 'ONLINE', 2000, 0.7, 0, 1),
-('本地模型', 'Local', 'llama-2-7b', 'http://localhost:8080/v1/chat/completions', 'LOCAL', 2000, 0.7, 0, 1);
+('本地模型', 'Local', 'llama-2-7b', 'http://localhost:8080/v1/chat/completions', 'LOCAL', 2000, 0.7, 0, 1),
+
+-- URL路径模式：模型名称在URL中（使用{model}占位符）
+-- 示例：企业统一网关
+('企业网关-GPT4', 'OpenAI', 'gpt-4', 'https://api.company.com/v1/chat/{model}', 'ONLINE', 2000, 0.7, 0, 1),
+('企业网关-Claude', 'Anthropic', 'claude-3', 'https://api.company.com/v1/chat/{model}', 'ONLINE', 2000, 0.7, 0, 1);

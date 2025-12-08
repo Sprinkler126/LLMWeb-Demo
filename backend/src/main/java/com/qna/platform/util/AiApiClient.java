@@ -37,11 +37,14 @@ public class AiApiClient {
                 .writeTimeout(Duration.ofSeconds(apiConfig.getTimeout()))
                 .build();
 
+        // 构建最终的API URL（支持模型名称占位符）
+        String finalUrl = buildFinalUrl(apiConfig);
+        
         // 根据不同的provider构建请求
         String requestBody = buildRequestBody(apiConfig, messages);
         
         Request.Builder requestBuilder = new Request.Builder()
-                .url(apiConfig.getApiEndpoint())
+                .url(finalUrl)
                 .post(RequestBody.create(requestBody, JSON_MEDIA_TYPE));
 
         // 添加认证头
@@ -72,21 +75,55 @@ public class AiApiClient {
     }
 
     /**
+     * 构建最终的API URL
+     * 支持两种模式：
+     * 1. URL中包含{model}占位符：https://api.example.com/v1/chat/{model}
+     * 2. 标准URL：https://api.openai.com/v1/chat/completions
+     */
+    private String buildFinalUrl(ApiConfig apiConfig) {
+        String url = apiConfig.getApiEndpoint();
+        String modelName = apiConfig.getModelName();
+        
+        // 如果URL中包含{model}或{modelName}占位符，替换为实际的模型名称
+        if (url.contains("{model}")) {
+            return url.replace("{model}", modelName);
+        } else if (url.contains("{modelName}")) {
+            return url.replace("{modelName}", modelName);
+        }
+        
+        // 如果URL以/结尾且包含模型名称占位符标识，追加模型名称
+        if (url.endsWith("/{model}")) {
+            return url.replace("/{model}", "/" + modelName);
+        }
+        
+        // 否则返回原始URL（标准模式，模型名称在请求体中）
+        return url;
+    }
+
+    /**
      * 构建请求体
      */
     private String buildRequestBody(ApiConfig apiConfig, List<Map<String, String>> messages) {
         Map<String, Object> requestBody = new HashMap<>();
+        
+        // 判断URL中是否已包含模型名称（避免重复）
+        boolean modelInUrl = apiConfig.getApiEndpoint().contains("{model}") 
+                          || apiConfig.getApiEndpoint().contains("{modelName}");
 
         switch (apiConfig.getProvider().toUpperCase()) {
             case "OPENAI":
             case "LOCAL":
-                requestBody.put("model", apiConfig.getModelName());
+                // 只有当模型名称不在URL中时，才添加到请求体
+                if (!modelInUrl) {
+                    requestBody.put("model", apiConfig.getModelName());
+                }
                 requestBody.put("messages", messages);
                 requestBody.put("max_tokens", apiConfig.getMaxTokens());
                 requestBody.put("temperature", apiConfig.getTemperature());
                 break;
 
             case "ANTHROPIC":
+                // Claude通常不使用URL路径模式
                 requestBody.put("model", apiConfig.getModelName());
                 requestBody.put("max_tokens", apiConfig.getMaxTokens());
                 requestBody.put("temperature", apiConfig.getTemperature());
@@ -111,7 +148,9 @@ public class AiApiClient {
 
             default:
                 // 默认使用OpenAI格式
-                requestBody.put("model", apiConfig.getModelName());
+                if (!modelInUrl) {
+                    requestBody.put("model", apiConfig.getModelName());
+                }
                 requestBody.put("messages", messages);
                 requestBody.put("max_tokens", apiConfig.getMaxTokens());
                 requestBody.put("temperature", apiConfig.getTemperature());
