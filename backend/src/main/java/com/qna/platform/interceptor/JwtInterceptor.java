@@ -25,14 +25,20 @@ public class JwtInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+        String uri = request.getRequestURI();
+        System.out.println("🔑 JWT拦截器检查路径: " + uri);
+        
         // 处理OPTIONS请求
         if ("OPTIONS".equals(request.getMethod())) {
+            System.out.println("   ✅ OPTIONS请求，直接放行");
             response.setStatus(HttpServletResponse.SC_OK);
             return true;
         }
 
         // 获取Token
         String token = request.getHeader(jwtConfig.getHeader());
+        System.out.println("   Authorization Header: " + (token != null ? "存在" : "不存在"));
+        
         if (token != null && token.startsWith(jwtConfig.getPrefix())) {
             token = token.substring(jwtConfig.getPrefix().length()).trim();
 
@@ -46,12 +52,18 @@ public class JwtInterceptor implements HandlerInterceptor {
                 request.setAttribute("userId", userId);
                 request.setAttribute("username", username);
                 request.setAttribute("role", role);
-
+                
+                System.out.println("   ✅ Token有效，用户: " + username);
                 return true;
+            } else {
+                System.out.println("   ❌ Token验证失败");
             }
+        } else {
+            System.out.println("   ❌ Token格式错误或不存在");
         }
 
         // Token无效
+        System.out.println("   ⛔ 返回401 - JWT拦截器拦截");
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         return false;
     }
