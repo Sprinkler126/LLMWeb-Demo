@@ -32,8 +32,20 @@ public class ExportController {
             @RequestParam(required = false) String token,
             HttpServletRequest request,
             HttpServletResponse response) {
-        Long userId = getUserIdFromTokenOrRequest(token, request);
-        exportService.exportSessionToJson(sessionId, userId, response);
+        System.out.println("🔍 导出接口被调用 - sessionId: " + sessionId);
+        System.out.println("🔍 请求 URI: " + request.getRequestURI());
+        System.out.println("🔍 Token 参数: " + (token != null ? "已提供" : "未提供"));
+        System.out.println("🔍 Authorization Header: " + request.getHeader("Authorization"));
+        
+        try {
+            Long userId = getUserIdFromTokenOrRequest(token, request);
+            System.out.println("✅ 用户验证成功 - userId: " + userId);
+            exportService.exportSessionToJson(sessionId, userId, response);
+        } catch (Exception e) {
+            System.err.println("❌ 导出失败: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     /**
@@ -73,6 +85,14 @@ public class ExportController {
             HttpServletResponse response) {
         Long userId = getUserIdFromTokenOrRequest(token, request);
         exportService.exportAllMessages(userId, format, response);
+    }
+    
+    /**
+     * 测试接口 - 验证拦截器是否跳过导出路径
+     */
+    @GetMapping("/test")
+    public Result<String> test(@RequestParam(required = false) String token) {
+        return Result.success("导出接口拦截器配置正常，token: " + (token != null ? "已提供" : "未提供"));
     }
     
     /**
