@@ -1,6 +1,6 @@
 <template>
   <div class="chat-container">
-    <el-row :gutter="20">
+    <el-row :gutter="20" class="chat-row">
       <!-- 会话列表 -->
       <el-col :span="6">
         <el-card class="session-list-card">
@@ -36,66 +36,68 @@
       <!-- 聊天区域 -->
       <el-col :span="18">
         <el-card class="chat-card">
-          <!-- API选择 -->
-          <div class="api-selector" v-if="!currentSessionId">
-            <el-select
-              v-model="selectedApiId"
-              placeholder="请选择AI模型"
-              size="large"
-              style="width: 300px"
-            >
-              <el-option
-                v-for="config in apiConfigs"
-                :key="config.id"
-                :label="config.configName"
-                :value="config.id"
+          <div class="chat-content-wrapper">
+            <!-- API选择 -->
+            <div class="api-selector" v-if="!currentSessionId">
+              <el-select
+                v-model="selectedApiId"
+                placeholder="请选择AI模型"
+                size="large"
+                style="width: 300px"
               >
-                <span>{{ config.configName }}</span>
-                <span style="color: #8492a6; font-size: 12px; margin-left: 10px">
-                  {{ config.provider }}
-                </span>
-              </el-option>
-            </el-select>
-          </div>
-
-          <!-- 消息列表 -->
-          <el-scrollbar height="calc(100vh - 350px)" ref="scrollbarRef" class="message-list">
-            <div v-if="messages.length === 0" class="empty-chat">
-              <el-empty description="开始你的对话吧！" />
+                <el-option
+                  v-for="config in apiConfigs"
+                  :key="config.id"
+                  :label="config.configName"
+                  :value="config.id"
+                >
+                  <span>{{ config.configName }}</span>
+                  <span style="color: #8492a6; font-size: 12px; margin-left: 10px">
+                    {{ config.provider }}
+                  </span>
+                </el-option>
+              </el-select>
             </div>
 
-            <div v-for="message in messages" :key="message.id" class="message-item">
-              <div :class="['message-bubble', message.role]">
-                <div class="message-role">
-                  {{ message.role === 'user' ? '你' : 'AI助手' }}
-                </div>
-                <div class="message-content">{{ message.content }}</div>
-                <div class="message-time">
-                  {{ formatTime(message.createdTime) }}
-                  <span v-if="message.responseTime" class="response-time">
-                    ({{ message.responseTime }}ms)
-                  </span>
+            <!-- 消息列表 -->
+            <div class="message-list" ref="messageListRef">
+              <div v-if="messages.length === 0" class="empty-chat">
+                <el-empty description="开始你的对话吧！" />
+              </div>
+
+              <div v-for="message in messages" :key="message.id" class="message-item">
+                <div :class="['message-bubble', message.role]">
+                  <div class="message-role">
+                    {{ message.role === 'user' ? '你' : 'AI助手' }}
+                  </div>
+                  <div class="message-content" v-html="renderMarkdown(message.content)"></div>
+                  <div class="message-time">
+                    {{ formatTime(message.createdTime) }}
+                    <span v-if="message.responseTime" class="response-time">
+                      ({{ message.responseTime }}ms)
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div v-if="loading" class="loading-message">
-              <el-icon class="is-loading"><Loading /></el-icon>
-              <span>AI正在思考中...</span>
+              <div v-if="loading" class="loading-message">
+                <el-icon class="is-loading"><Loading /></el-icon>
+                <span>AI正在思考中...</span>
+              </div>
             </div>
-          </el-scrollbar>
+          </div>
 
-          <!-- 输入框 -->
-          <div class="input-area">
+          <!-- 输入框 - 固定在底部 -->
+          <div class="input-area-fixed">
             <el-input
               v-model="inputMessage"
               type="textarea"
               :rows="3"
-              placeholder="输入你的问题..."
+              placeholder="输入你的问题... (支持 Markdown 格式)"
               @keydown.enter.ctrl="sendMessage"
             />
             <div class="input-footer">
-              <span class="input-tip">Ctrl + Enter 发送</span>
+              <span class="input-tip">Ctrl + Enter 发送 | 支持 Markdown</span>
               <el-button
                 type="primary"
                 :loading="loading"
@@ -119,8 +121,27 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { getUserSessions, getSessionHistory, sendMessage as sendMessageApi, deleteSession } from '@/api/chat'
 import { getEnabledConfigs } from '@/api/apiConfig'
 import { useUserStore } from '@/store/user'
+import { marked } from 'marked'
+import hljs from 'highlight.js'
+import 'highlight.js/styles/github-dark.css'
 
 const userStore = useUserStore()
+
+// 配置 marked
+marked.setOptions({
+  highlight: function(code, lang) {
+    if (lang && hljs.getLanguage(lang)) {
+      try {
+        return hljs.highlight(code, { language: lang }).value
+      } catch (err) {
+        console.error(err)
+      }
+    }
+    return hljs.highlightAuto(code).value
+  },
+  breaks: true,
+  gfm: true
+})
 
 const sessions = ref([])
 const currentSessionId = ref(null)
@@ -129,7 +150,7 @@ const apiConfigs = ref([])
 const selectedApiId = ref(null)
 const inputMessage = ref('')
 const loading = ref(false)
-const scrollbarRef = ref(null)
+const messageListRef = ref(null)
 
 onMounted(() => {
   loadSessions()
@@ -239,10 +260,21 @@ const deleteSessionConfirm = (sessionId) => {
 
 const scrollToBottom = () => {
   nextTick(() => {
-    if (scrollbarRef.value) {
-      scrollbarRef.value.setScrollTop(999999)
+    if (messageListRef.value) {
+      messageListRef.value.scrollTop = messageListRef.value.scrollHeight
     }
   })
+}
+
+// Markdown 渲染函数
+const renderMarkdown = (content) => {
+  if (!content) return ''
+  try {
+    return marked(content)
+  } catch (error) {
+    console.error('Markdown rendering error:', error)
+    return content
+  }
 }
 
 const formatTime = (time) => {
@@ -255,11 +287,37 @@ const formatTime = (time) => {
 <style scoped>
 .chat-container {
   height: calc(100vh - 80px);
+  overflow: hidden;
+}
+
+.chat-row {
+  height: 100%;
 }
 
 .session-list-card,
 .chat-card {
   height: calc(100vh - 120px);
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-card {
+  position: relative;
+  padding-bottom: 180px !important; /* 为固定输入框留出空间 */
+}
+
+.chat-card :deep(.el-card__body) {
+  padding: 0 !important;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-content-wrapper {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .card-header {
@@ -308,10 +366,14 @@ const formatTime = (time) => {
 .api-selector {
   padding: 20px;
   text-align: center;
+  flex-shrink: 0;
 }
 
 .message-list {
+  flex: 1;
+  overflow-y: auto;
   padding: 20px;
+  scroll-behavior: smooth;
 }
 
 .empty-chat {
@@ -354,6 +416,97 @@ const formatTime = (time) => {
   word-wrap: break-word;
 }
 
+/* Markdown 样式优化 */
+.message-content :deep(pre) {
+  background: #282c34;
+  padding: 15px;
+  border-radius: 5px;
+  overflow-x: auto;
+  margin: 10px 0;
+}
+
+.message-content :deep(code) {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 13px;
+}
+
+.message-content :deep(p code) {
+  background: rgba(0, 0, 0, 0.1);
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: #e83e8c;
+}
+
+.message-content :deep(h1),
+.message-content :deep(h2),
+.message-content :deep(h3) {
+  margin-top: 15px;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.message-content :deep(ul),
+.message-content :deep(ol) {
+  margin: 10px 0;
+  padding-left: 25px;
+}
+
+.message-content :deep(li) {
+  margin: 5px 0;
+}
+
+.message-content :deep(blockquote) {
+  border-left: 4px solid #409eff;
+  padding-left: 15px;
+  margin: 10px 0;
+  color: #666;
+  font-style: italic;
+}
+
+.message-content :deep(table) {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 10px 0;
+}
+
+.message-content :deep(th),
+.message-content :deep(td) {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.message-content :deep(th) {
+  background-color: #f2f2f2;
+  font-weight: bold;
+}
+
+.message-content :deep(a) {
+  color: #409eff;
+  text-decoration: none;
+}
+
+.message-content :deep(a:hover) {
+  text-decoration: underline;
+}
+
+.message-content :deep(img) {
+  max-width: 100%;
+  height: auto;
+  border-radius: 5px;
+  margin: 10px 0;
+}
+
+/* 用户消息中的代码块样式 */
+.message-bubble.user .message-content :deep(p code) {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffe58f;
+}
+
+.message-bubble.user .message-content :deep(pre) {
+  background: rgba(0, 0, 0, 0.3);
+}
+
 .message-time {
   font-size: 12px;
   margin-top: 5px;
@@ -372,9 +525,15 @@ const formatTime = (time) => {
   color: #909399;
 }
 
-.input-area {
+.input-area-fixed {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
   padding: 20px;
+  background: #fff;
   border-top: 1px solid #e6e6e6;
+  z-index: 10;
 }
 
 .input-footer {
