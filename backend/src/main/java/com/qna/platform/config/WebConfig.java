@@ -40,8 +40,7 @@ public class WebConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         System.out.println("=================================================");
         System.out.println("🔧 配置JWT拦截器 - 排除路径：");
-        System.out.println("   - /auth/login");
-        System.out.println("   - /auth/register");
+        System.out.println("   - /auth/**");
         System.out.println("   - /export/**");
         System.out.println("   - /error");
         System.out.println("   - /swagger-ui/**");
@@ -51,8 +50,7 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addInterceptor(jwtInterceptor)
                 .addPathPatterns("/**")
                 .excludePathPatterns(
-                        "/auth/login",
-                        "/auth/register",
+                        "/auth/**",          // 认证接口（登录、注册）
                         "/export/**",        // 导出接口（通过 URL token 验证）
                         "/error",
                         "/swagger-ui/**",
