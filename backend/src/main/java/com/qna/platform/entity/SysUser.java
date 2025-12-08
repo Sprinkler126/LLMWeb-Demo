@@ -57,6 +57,11 @@ public class SysUser implements Serializable {
     private String role;
 
     /**
+     * 角色ID（关联sys_role表）
+     */
+    private Long roleId;
+
+    /**
      * 状态：0-禁用，1-启用
      */
     private Integer status;
