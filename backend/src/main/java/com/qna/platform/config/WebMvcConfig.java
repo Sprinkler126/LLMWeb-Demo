@@ -29,14 +29,15 @@ public class WebMvcConfig implements WebMvcConfigurer {
         System.out.println("   - /v3/api-docs/**");
         System.out.println("=================================================");
         
+        // 注意：先排除路径，再添加拦截模式
         registry.addInterceptor(permissionInterceptor)
-                .addPathPatterns("/**")
                 .excludePathPatterns(
                         "/auth/**",              // 认证接口（context-path 已去除）
                         "/export/**",            // 导出接口（通过 URL token 验证）
                         "/error",                // 错误页面
                         "/swagger-ui/**",        // Swagger UI
                         "/v3/api-docs/**"       // API 文档
-                );
+                )
+                .addPathPatterns("/**");         // 拦截所有其他路径
     }
 }

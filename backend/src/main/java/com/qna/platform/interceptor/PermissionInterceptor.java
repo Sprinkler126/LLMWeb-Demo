@@ -37,6 +37,14 @@ public class PermissionInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         String uri = request.getRequestURI();
         System.out.println("🛡️ 拦截器检查路径: " + uri);
+        System.out.println("   Handler 类型: " + handler.getClass().getName());
+        
+        // 明确排除导出路径（防御性编程）
+        if (uri.startsWith("/export/") || uri.equals("/export")) {
+            System.out.println("   ⚠️ 导出路径，应该被 WebMvcConfig 排除，但依然进入拦截器");
+            System.out.println("   ✅ 手动放行导出路径");
+            return true;
+        }
         
         // 如果不是方法处理器，直接放行
         if (!(handler instanceof HandlerMethod)) {
@@ -45,6 +53,8 @@ public class PermissionInterceptor implements HandlerInterceptor {
         }
         
         HandlerMethod handlerMethod = (HandlerMethod) handler;
+        System.out.println("   方法: " + handlerMethod.getMethod().getName());
+        System.out.println("   Controller: " + handlerMethod.getBeanType().getSimpleName());
         
         // 检查方法上的权限注解
         RequirePermission methodPermission = handlerMethod.getMethodAnnotation(RequirePermission.class);
@@ -54,8 +64,14 @@ public class PermissionInterceptor implements HandlerInterceptor {
         RequirePermission classPermission = handlerMethod.getBeanType().getAnnotation(RequirePermission.class);
         RequireRole classRole = handlerMethod.getBeanType().getAnnotation(RequireRole.class);
         
+        System.out.println("   方法权限注解: " + (methodPermission != null));
+        System.out.println("   方法角色注解: " + (methodRole != null));
+        System.out.println("   类权限注解: " + (classPermission != null));
+        System.out.println("   类角色注解: " + (classRole != null));
+        
         // 如果没有权限注解，直接放行
         if (methodPermission == null && classPermission == null && methodRole == null && classRole == null) {
+            System.out.println("   ✅ 无权限注解，直接放行");
             return true;
         }
         
