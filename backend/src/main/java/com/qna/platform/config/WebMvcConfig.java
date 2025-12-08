@@ -20,6 +20,15 @@ public class WebMvcConfig implements WebMvcConfigurer {
     
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        System.out.println("=================================================");
+        System.out.println("🔧 配置拦截器 - 排除路径：");
+        System.out.println("   - /auth/**");
+        System.out.println("   - /export/**");
+        System.out.println("   - /error");
+        System.out.println("   - /swagger-ui/**");
+        System.out.println("   - /v3/api-docs/**");
+        System.out.println("=================================================");
+        
         registry.addInterceptor(permissionInterceptor)
                 .addPathPatterns("/**")
                 .excludePathPatterns(

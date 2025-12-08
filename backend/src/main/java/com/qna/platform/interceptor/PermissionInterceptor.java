@@ -35,8 +35,12 @@ public class PermissionInterceptor implements HandlerInterceptor {
     
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        String uri = request.getRequestURI();
+        System.out.println("🛡️ 拦截器检查路径: " + uri);
+        
         // 如果不是方法处理器，直接放行
         if (!(handler instanceof HandlerMethod)) {
+            System.out.println("   ✅ 非方法处理器，直接放行");
             return true;
         }
         
