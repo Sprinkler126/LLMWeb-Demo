@@ -199,6 +199,10 @@ import {
   updateApiQuota,
   getEnabledRoles
 } from '@/api/admin'
+import { useComponentLifecycle } from '@/composables/useComponentLifecycle'
+
+// 使用生命周期管理
+const { safeAsync } = useComponentLifecycle()
 
 // 数据
 const loading = ref(false)

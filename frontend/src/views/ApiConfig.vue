@@ -111,6 +111,10 @@
 import { ref, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getConfigList, createConfig, updateConfig, deleteConfig as deleteConfigApi, testConfig } from '@/api/apiConfig'
+import { useComponentLifecycle } from '@/composables/useComponentLifecycle'
+
+// 使用生命周期管理
+const { isUnmounted, safeAsync } = useComponentLifecycle()
 
 // API 提供商配置信息
 const providerConfigs = {
@@ -187,12 +191,10 @@ onMounted(() => {
 })
 
 const loadConfigList = async () => {
-  try {
+  await safeAsync(async () => {
     const res = await getConfigList({ current: 1, size: 100 })
     configList.value = res.data.records
-  } catch (error) {
-    console.error(error)
-  }
+  })
 }
 
 const openDialog = (row = null) => {
@@ -250,7 +252,7 @@ const resetEndpoint = () => {
 }
 
 const saveConfig = async () => {
-  try {
+  await safeAsync(async () => {
     if (form.value.id) {
       await updateConfig(form.value.id, form.value)
       ElMessage.success('更新成功')
@@ -260,9 +262,7 @@ const saveConfig = async () => {
     }
     dialogVisible.value = false
     await loadConfigList()
-  } catch (error) {
-    console.error(error)
-  }
+  })
 }
 
 const deleteConfig = (id) => {
@@ -271,23 +271,25 @@ const deleteConfig = (id) => {
     cancelButtonText: '取消',
     type: 'warning'
   }).then(async () => {
-    try {
+    await safeAsync(async () => {
       await deleteConfigApi(id)
       ElMessage.success('删除成功')
       await loadConfigList()
-    } catch (error) {
-      console.error(error)
-    }
+    })
+  }).catch(() => {
+    // 用户取消，不做任何操作
   })
 }
 
 const testApiConfig = async (id) => {
-  try {
-    await testConfig(id)
-    ElMessage.success('API测试成功')
-  } catch (error) {
-    ElMessage.error('API测试失败')
-  }
+  await safeAsync(async () => {
+    try {
+      await testConfig(id)
+      ElMessage.success('API测试成功')
+    } catch (error) {
+      ElMessage.error('API测试失败')
+    }
+  })
 }
 </script>
 
