@@ -1,5 +1,6 @@
 package com.qna.platform.controller;
 
+import com.qna.platform.annotation.RequirePermission;
 import com.qna.platform.common.Result;
 import com.qna.platform.dto.ChatRequestDTO;
 import com.qna.platform.service.ChatService;
@@ -11,11 +12,13 @@ import java.util.Map;
 
 /**
  * 对话控制器
+ * 需要API使用权限
  *
  * @author QnA Platform
  */
 @RestController
 @RequestMapping("/chat")
+@RequirePermission("API_USE")
 public class ChatController {
 
     private final ChatService chatService;

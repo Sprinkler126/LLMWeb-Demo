@@ -44,6 +44,12 @@ const routes = [
         name: 'UserManagement',
         component: () => import('@/views/UserManagement.vue'),
         meta: { title: '用户管理', requiresAdmin: true }
+      },
+      {
+        path: 'role-permission',
+        name: 'RolePermission',
+        component: () => import('@/views/RolePermission.vue'),
+        meta: { title: '角色权限配置', requiresAdmin: true }
       }
     ]
   }

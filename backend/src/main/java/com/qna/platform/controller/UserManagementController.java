@@ -1,5 +1,7 @@
 package com.qna.platform.controller;
 
+import com.qna.platform.annotation.RequirePermission;
+import com.qna.platform.annotation.RequireRole;
 import com.qna.platform.common.Result;
 import com.qna.platform.dto.UserManagementDTO;
 import com.qna.platform.entity.SysUser;
@@ -11,12 +13,14 @@ import java.util.List;
 
 /**
  * 用户管理控制器
+ * 需要用户管理权限
  *
  * @author QnA Platform
  */
 @RestController
 @RequestMapping("/admin/users")
 @RequiredArgsConstructor
+@RequirePermission("USER_MANAGE")
 public class UserManagementController {
     
     private final UserManagementService userManagementService;

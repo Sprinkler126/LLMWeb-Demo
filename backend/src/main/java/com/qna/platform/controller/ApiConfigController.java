@@ -1,5 +1,6 @@
 package com.qna.platform.controller;
 
+import com.qna.platform.annotation.RequirePermission;
 import com.qna.platform.common.PageResult;
 import com.qna.platform.common.Result;
 import com.qna.platform.entity.ApiConfig;
@@ -11,11 +12,13 @@ import java.util.List;
 
 /**
  * API配置控制器
+ * 需要API管理权限
  *
  * @author QnA Platform
  */
 @RestController
 @RequestMapping("/api-config")
+@RequirePermission("API_MANAGE")
 public class ApiConfigController {
 
     private final ApiConfigService apiConfigService;
@@ -84,9 +87,10 @@ public class ApiConfigController {
     }
 
     /**
-     * 获取所有启用的API配置
+     * 获取所有启用的API配置（所有用户可访问）
      */
     @GetMapping("/enabled")
+    @RequirePermission("API_USE")
     public Result<List<ApiConfig>> getEnabledConfigs() {
         try {
             List<ApiConfig> configs = apiConfigService.getEnabledConfigs();

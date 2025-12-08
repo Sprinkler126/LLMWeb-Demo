@@ -1,5 +1,6 @@
 package com.qna.platform.controller;
 
+import com.qna.platform.annotation.RequirePermission;
 import com.qna.platform.common.PageResult;
 import com.qna.platform.common.Result;
 import com.qna.platform.dto.ComplianceCheckDTO;
@@ -13,11 +14,13 @@ import java.util.Map;
 
 /**
  * 合规检测控制器
+ * 需要合规检测权限
  *
  * @author QnA Platform
  */
 @RestController
 @RequestMapping("/compliance")
+@RequirePermission("COMPLIANCE_CHECK")
 public class ComplianceController {
 
     private final ComplianceService complianceService;

@@ -1,5 +1,7 @@
 package com.qna.platform.controller;
 
+import com.qna.platform.annotation.RequirePermission;
+import com.qna.platform.annotation.RequireRole;
 import com.qna.platform.common.Result;
 import com.qna.platform.dto.RolePermissionDTO;
 import com.qna.platform.entity.SysPermission;
@@ -14,12 +16,14 @@ import java.util.Map;
 
 /**
  * 角色权限管理控制器
+ * 需要权限配置权限
  *
  * @author QnA Platform
  */
 @RestController
 @RequestMapping("/admin/roles")
 @RequiredArgsConstructor
+@RequirePermission("PERMISSION_CONFIG")
 public class RolePermissionController {
     
     private final RolePermissionService rolePermissionService;
@@ -34,9 +38,10 @@ public class RolePermissionController {
     }
     
     /**
-     * 获取可用角色列表
+     * 获取可用角色列表（所有用户可访问）
      */
     @GetMapping("/enabled")
+    @RequirePermission(value = {}, requireAll = false)
     public Result<List<SysRole>> getEnabledRoles() {
         List<SysRole> roles = rolePermissionService.getEnabledRoles();
         return Result.success(roles);
@@ -77,18 +82,20 @@ public class RolePermissionController {
     }
     
     /**
-     * 获取用户权限列表
+     * 获取用户权限列表（所有用户可访问）
      */
     @GetMapping("/user/{userId}/permissions")
+    @RequirePermission(value = {}, requireAll = false)
     public Result<List<SysPermission>> getUserPermissions(@PathVariable Long userId) {
         List<SysPermission> permissions = rolePermissionService.getUserPermissions(userId);
         return Result.success(permissions);
     }
     
     /**
-     * 检查用户是否有某个权限
+     * 检查用户是否有某个权限（所有用户可访问）
      */
     @GetMapping("/user/{userId}/has-permission")
+    @RequirePermission(value = {}, requireAll = false)
     public Result<Boolean> hasPermission(@PathVariable Long userId, 
                                          @RequestParam String permissionCode) {
         boolean has = rolePermissionService.hasPermission(userId, permissionCode);
