@@ -187,9 +187,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
+import { Plus, Search, Refresh } from '@element-plus/icons-vue'
 import {
   getAllUsers,
   createUser,
@@ -209,6 +209,14 @@ const loading = ref(false)
 const userList = ref([])
 const roleList = ref([])
 const currentUser = ref(null)
+
+// 搜索表单
+const searchForm = ref({
+  username: '',
+  email: '',
+  roleId: null,
+  status: null
+})
 
 // 对话框控制
 const createDialogVisible = ref(false)
@@ -271,6 +279,54 @@ const loadRoles = async () => {
   } catch (error) {
     console.error('加载角色列表失败', error)
   }
+}
+
+// 过滤后的用户列表（计算属性）
+const filteredUserList = computed(() => {
+  let result = userList.value
+
+  // 按用户名过滤（模糊搜索）
+  if (searchForm.value.username) {
+    result = result.filter(user => 
+      user.username.toLowerCase().includes(searchForm.value.username.toLowerCase())
+    )
+  }
+
+  // 按邮箱过滤（模糊搜索）
+  if (searchForm.value.email) {
+    result = result.filter(user => 
+      user.email && user.email.toLowerCase().includes(searchForm.value.email.toLowerCase())
+    )
+  }
+
+  // 按角色过滤（精确匹配）
+  if (searchForm.value.roleId !== null && searchForm.value.roleId !== undefined) {
+    result = result.filter(user => user.roleId === searchForm.value.roleId)
+  }
+
+  // 按状态过滤（精确匹配）
+  if (searchForm.value.status !== null && searchForm.value.status !== undefined) {
+    result = result.filter(user => user.status === searchForm.value.status)
+  }
+
+  return result
+})
+
+// 搜索处理
+const handleSearch = () => {
+  console.log('🔍 执行搜索:', searchForm.value)
+  // filteredUserList 会自动更新
+}
+
+// 重置搜索
+const handleReset = () => {
+  searchForm.value = {
+    username: '',
+    email: '',
+    roleId: null,
+    status: null
+  }
+  console.log('🔄 重置搜索条件')
 }
 
 // 角色标签类型
