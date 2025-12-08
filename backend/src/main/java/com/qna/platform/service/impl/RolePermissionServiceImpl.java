@@ -59,9 +59,9 @@ public class RolePermissionServiceImpl implements RolePermissionService {
             throw new RuntimeException("角色不存在");
         }
         
-        // 检查是否是系统角色
-        if (role.getIsSystem() == 1 && !"SUPER_ADMIN".equals(role.getRoleCode())) {
-            throw new RuntimeException("系统角色不允许修改权限");
+        // 只有超级管理员角色不允许修改权限（超级管理员永远拥有所有权限）
+        if ("SUPER_ADMIN".equals(role.getRoleCode())) {
+            throw new RuntimeException("超级管理员角色不允许修改权限");
         }
         
         // 删除原有权限
