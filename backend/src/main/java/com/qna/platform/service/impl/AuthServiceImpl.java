@@ -1,6 +1,5 @@
 package com.qna.platform.service.impl;
 
-import cn.hutool.crypto.digest.BCrypt;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.qna.platform.dto.LoginDTO;
 import com.qna.platform.entity.SysUser;
@@ -8,6 +7,7 @@ import com.qna.platform.enums.UserRole;
 import com.qna.platform.mapper.SysUserMapper;
 import com.qna.platform.service.AuthService;
 import com.qna.platform.util.JwtUtil;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,10 +25,12 @@ public class AuthServiceImpl implements AuthService {
 
     private final SysUserMapper userMapper;
     private final JwtUtil jwtUtil;
+    private final BCryptPasswordEncoder passwordEncoder;
 
     public AuthServiceImpl(SysUserMapper userMapper, JwtUtil jwtUtil) {
         this.userMapper = userMapper;
         this.jwtUtil = jwtUtil;
+        this.passwordEncoder = new BCryptPasswordEncoder();
     }
 
     @Override
@@ -43,7 +45,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         // 验证密码
-        if (!BCrypt.checkpw(loginDTO.getPassword(), user.getPassword())) {
+        if (!passwordEncoder.matches(loginDTO.getPassword(), user.getPassword())) {
             throw new RuntimeException("用户名或密码错误");
         }
 
@@ -85,7 +87,7 @@ public class AuthServiceImpl implements AuthService {
         // 创建新用户
         SysUser user = new SysUser();
         user.setUsername(loginDTO.getUsername());
-        user.setPassword(BCrypt.hashpw(loginDTO.getPassword()));
+        user.setPassword(passwordEncoder.encode(loginDTO.getPassword()));
         user.setNickname(loginDTO.getUsername());
         user.setRole(UserRole.USER.name());
         user.setStatus(1);
