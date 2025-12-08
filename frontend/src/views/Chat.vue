@@ -69,8 +69,46 @@
                 <div :class="['message-bubble', message.role]">
                   <div class="message-role">
                     {{ message.role === 'user' ? '你' : 'AI助手' }}
+                    
+                    <!-- 合规状态标签 -->
+                    <el-tag 
+                      v-if="message.complianceStatus === 'PASS'" 
+                      type="success" 
+                      size="small"
+                      class="compliance-tag">
+                      ✓ 合规
+                    </el-tag>
+                    
+                    <el-tag 
+                      v-else-if="message.complianceStatus === 'FAIL'" 
+                      type="danger" 
+                      size="small"
+                      class="compliance-tag">
+                      ⚠ 风险
+                    </el-tag>
+                    
+                    <el-tag 
+                      v-else-if="message.complianceStatus === 'UNCHECKED'" 
+                      type="info" 
+                      size="small"
+                      class="compliance-tag">
+                      ○ 未检测
+                    </el-tag>
                   </div>
                   <div class="message-content" v-html="renderMarkdown(message.content)"></div>
+                  
+                  <!-- 显示风险详情（如果有） -->
+                  <div v-if="message.complianceResult && message.complianceStatus === 'FAIL'" 
+                       class="compliance-detail">
+                    <el-alert 
+                      type="warning" 
+                      :closable="false"
+                      show-icon>
+                      <template #title>
+                        风险提示：{{ getComplianceDetail(message.complianceResult) }}
+                      </template>
+                    </el-alert>
+                  </div>
                   <div class="message-time">
                     {{ formatTime(message.createdTime) }}
                     <span v-if="message.responseTime" class="response-time">
@@ -277,6 +315,16 @@ const renderMarkdown = (content) => {
   }
 }
 
+// 获取合规检测详情
+const getComplianceDetail = (complianceResult) => {
+  try {
+    const result = JSON.parse(complianceResult)
+    return result.detail || '内容存在风险'
+  } catch (error) {
+    return '内容存在风险'
+  }
+}
+
 const formatTime = (time) => {
   if (!time) return ''
   const date = new Date(time)
@@ -408,6 +456,22 @@ const formatTime = (time) => {
   font-size: 12px;
   margin-bottom: 5px;
   opacity: 0.8;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.compliance-tag {
+  font-size: 11px;
+  padding: 2px 8px;
+  margin-left: auto;
+}
+
+.compliance-detail {
+  margin-top: 10px;
+  padding: 8px;
+  background: rgba(255, 193, 7, 0.05);
+  border-radius: 4px;
 }
 
 .message-content {
