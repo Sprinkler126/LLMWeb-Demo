@@ -61,41 +61,68 @@ const router = createRouter({
 })
 
 // 路由守卫
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore()
+  
+  console.log('🛡️ 路由守卫检查:', { 
+    from: from.path, 
+    to: to.path, 
+    hasToken: !!userStore.token,
+    role: userStore.role,
+    isAdmin: userStore.isAdmin 
+  })
+  
+  // 防止重复导航到同一路径
+  if (to.path === from.path && from.path !== '/') {
+    console.log('⚠️ 阻止重复导航到同一路径:', to.path)
+    next(false) // 取消导航
+    return
+  }
   
   // 如果需要认证但未登录，跳转到登录页
   if (to.meta.requiresAuth && !userStore.token) {
+    console.log('❌ 未登录，跳转到登录页')
     next('/login')
     return
   }
   
   // 如果需要合规检测权限但没有该权限
   if (to.meta.requiresPermission && !userStore.hasCompliancePermission) {
-    // 防止重复导航到同一路径
-    if (from.path !== to.path) {
+    console.log('❌ 无合规检测权限')
+    if (from.path && from.path !== '/' && from.path !== to.path) {
       const { ElMessage } = await import('element-plus')
       ElMessage.warning('您没有合规检测权限')
+      next(false) // 停留在当前页面
+    } else {
+      next('/chat') // 跳转到首页
     }
-    // 如果 from 是空的（首次访问），跳转到首页
-    next(from.path || '/chat')
     return
   }
   
   // 如果需要管理员权限但不是管理员
   if (to.meta.requiresAdmin && !userStore.isAdmin) {
-    // 防止重复导航到同一路径
-    if (from.path !== to.path) {
+    console.log('❌ 无管理员权限, role:', userStore.role, 'isAdmin:', userStore.isAdmin)
+    if (from.path && from.path !== '/' && from.path !== to.path) {
       const { ElMessage } = await import('element-plus')
       ElMessage.warning('您没有管理员权限')
+      next(false) // 停留在当前页面
+    } else {
+      next('/chat') // 跳转到首页
     }
-    // 如果 from 是空的（首次访问），跳转到首页
-    next(from.path || '/chat')
     return
   }
   
   // 允许访问
+  console.log('✅ 路由守卫通过，允许访问:', to.path)
   next()
+})
+
+// 处理路由错误（防止重复导航警告）
+router.onError((error) => {
+  console.error('🚨 路由错误:', error)
+  if (error.message.includes('Avoided redundant navigation')) {
+    console.log('已拦截重复导航错误')
+  }
 })
 
 export default router

@@ -9,6 +9,8 @@
         :default-active="activeMenu"
         router
         class="menu"
+        unique-opened
+        @select="handleMenuSelect"
       >
         <el-menu-item index="/chat">
           <el-icon><ChatDotRound /></el-icon>
@@ -78,7 +80,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import { Key } from '@element-plus/icons-vue'
@@ -92,6 +94,37 @@ const defaultAvatar = 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e5
 
 const activeMenu = computed(() => route.path)
 const pageTitle = computed(() => route.meta.title || '首页')
+
+// 🔍 调试：监控 store 状态变化
+onMounted(() => {
+  console.log('📱 Layout 组件已挂载，当前用户信息:', {
+    token: !!userStore.token,
+    role: userStore.role,
+    isAdmin: userStore.isAdmin,
+    hasCompliancePermission: userStore.hasCompliancePermission,
+    username: userStore.username
+  })
+})
+
+// 监控路由变化
+watch(() => route.path, (newPath, oldPath) => {
+  console.log('🚏 路由变化:', { from: oldPath, to: newPath, title: route.meta.title })
+})
+
+// 监控 store 状态变化
+watch(() => userStore.role, (newRole) => {
+  console.log('👤 用户角色变化:', newRole, 'isAdmin:', userStore.isAdmin)
+})
+
+// 菜单选择处理
+const handleMenuSelect = (index) => {
+  console.log('📋 菜单选择:', index)
+  // 如果选择的是当前已激活的菜单项，不做任何操作
+  if (index === route.path) {
+    console.log('⚠️ 已在当前页面，阻止重复导航')
+    return false
+  }
+}
 
 const handleCommand = (command) => {
   if (command === 'logout') {

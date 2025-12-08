@@ -3,10 +3,17 @@ import { defineStore } from 'pinia'
 export const useUserStore = defineStore('user', {
   state: () => {
     // 从 localStorage 恢复用户信息
-    const savedUserInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
+    const savedToken = localStorage.getItem('token') || ''
+    const savedUserInfoStr = localStorage.getItem('userInfo')
+    const savedUserInfo = savedUserInfoStr ? JSON.parse(savedUserInfoStr) : {}
+    
+    console.log('🔄 Store 初始化 - 从 localStorage 恢复数据:', {
+      hasToken: !!savedToken,
+      savedUserInfo
+    })
     
     return {
-      token: localStorage.getItem('token') || '',
+      token: savedToken,
       userInfo: savedUserInfo,
       userId: savedUserInfo.userId || null,
       username: savedUserInfo.username || '',
@@ -15,7 +22,8 @@ export const useUserStore = defineStore('user', {
       avatar: savedUserInfo.avatar || '',
       apiQuota: savedUserInfo.apiQuota || 0,
       apiUsed: savedUserInfo.apiUsed || 0,
-      hasCompliancePermission: savedUserInfo.hasCompliancePermission === 1
+      // 修复：兼容后端返回的 0/1 数字类型
+      hasCompliancePermission: savedUserInfo.hasCompliancePermission === 1 || savedUserInfo.hasCompliancePermission === true
     }
   },
 
@@ -31,6 +39,8 @@ export const useUserStore = defineStore('user', {
     },
 
     setUserInfo(userInfo) {
+      console.log('📝 设置用户信息:', userInfo)
+      
       this.userId = userInfo.userId
       this.username = userInfo.username
       this.nickname = userInfo.nickname
@@ -38,10 +48,17 @@ export const useUserStore = defineStore('user', {
       this.avatar = userInfo.avatar
       this.apiQuota = userInfo.apiQuota
       this.apiUsed = userInfo.apiUsed
-      this.hasCompliancePermission = userInfo.hasCompliancePermission === 1
+      // 修复：兼容后端返回的 0/1 数字类型
+      this.hasCompliancePermission = userInfo.hasCompliancePermission === 1 || userInfo.hasCompliancePermission === true
 
       this.userInfo = userInfo
       localStorage.setItem('userInfo', JSON.stringify(userInfo))
+      
+      console.log('✅ 用户信息已保存到 store 和 localStorage:', {
+        role: this.role,
+        isAdmin: this.isAdmin,
+        hasCompliancePermission: this.hasCompliancePermission
+      })
     },
 
     updateApiUsage(used) {
