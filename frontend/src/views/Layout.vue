@@ -51,6 +51,11 @@
           <el-icon><DataAnalysis /></el-icon>
           <span>平台数据</span>
         </el-menu-item>
+
+        <el-menu-item index="/system-config" v-if="userStore.role === 'SUPER_ADMIN'">
+          <el-icon><Tools /></el-icon>
+          <span>系统配置</span>
+        </el-menu-item>
       </el-menu>
     </el-aside>
 
@@ -93,7 +98,7 @@
 import { computed, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessageBox, ElMessage } from 'element-plus'
-import { Key, FolderOpened, DataAnalysis } from '@element-plus/icons-vue'
+import { Key, FolderOpened, DataAnalysis, Tools } from '@element-plus/icons-vue'
 import { useUserStore } from '@/store/user'
 
 const router = useRouter()

@@ -68,6 +68,12 @@ const routes = [
         name: 'Dashboard',
         component: () => import('@/views/Dashboard.vue'),
         meta: { title: '平台数据', requiresAdmin: true }
+      },
+      {
+        path: 'system-config',
+        name: 'SystemConfig',
+        component: () => import('@/views/SystemConfig.vue'),
+        meta: { title: '系统配置', requiresAdmin: true }
       }
     ]
   }
