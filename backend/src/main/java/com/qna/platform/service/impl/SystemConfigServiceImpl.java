@@ -75,7 +75,7 @@ public class SystemConfigServiceImpl implements SystemConfigService {
     
     @Override
     public Object testPythonConnection() {
-        String endpoint = getConfigValue("python.compliance.endpoint", "http://localhost:5000/check_compliance");
+        String endpoint = getConfigValue("python.compliance.endpoint", "http://localhost:5000/api/compliance/check");
         
         Map<String, Object> result = new HashMap<>();
         result.put("endpoint", endpoint);
@@ -83,8 +83,7 @@ public class SystemConfigServiceImpl implements SystemConfigService {
         try {
             // 发送测试请求
             Map<String, Object> testData = new HashMap<>();
-            testData.put("text", "This is a test message");
-            testData.put("test", true);
+            testData.put("content", "This is a test message for compliance check");  // Python服务期望content字段
             
             // 设置超时时间
             String timeoutStr = getConfigValue("python.compliance.timeout", "30000");
