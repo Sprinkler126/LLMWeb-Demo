@@ -57,4 +57,19 @@ public interface SystemConfigService {
      * @return 测试结果
      */
     Object testPythonConnection();
+    
+    /**
+     * 根据服务分组获取配置列表
+     *
+     * @param serviceGroup 服务分组
+     * @return 配置列表
+     */
+    List<SysConfig> getConfigsByServiceGroup(String serviceGroup);
+    
+    /**
+     * 获取所有服务分组
+     *
+     * @return 服务分组列表
+     */
+    List<String> getAllServiceGroups();
 }

@@ -61,4 +61,19 @@ public class SysConfig {
      * 更新人ID
      */
     private Long updatedBy;
+    
+    /**
+     * 服务分组（如：compliance, analytics, nlp等）
+     */
+    private String serviceGroup;
+    
+    /**
+     * 显示顺序
+     */
+    private Integer displayOrder;
+    
+    /**
+     * 是否激活：0-禁用，1-启用
+     */
+    private Integer isActive;
 }

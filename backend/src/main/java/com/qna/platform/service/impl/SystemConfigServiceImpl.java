@@ -107,4 +107,26 @@ public class SystemConfigServiceImpl implements SystemConfigService {
         
         return result;
     }
+    
+    @Override
+    public List<SysConfig> getConfigsByServiceGroup(String serviceGroup) {
+        LambdaQueryWrapper<SysConfig> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(SysConfig::getServiceGroup, serviceGroup)
+                .orderByAsc(SysConfig::getDisplayOrder);
+        return configMapper.selectList(wrapper);
+    }
+    
+    @Override
+    public List<String> getAllServiceGroups() {
+        // 使用MyBatis Plus获取所有不同的服务分组
+        LambdaQueryWrapper<SysConfig> wrapper = new LambdaQueryWrapper<>();
+        wrapper.select(SysConfig::getServiceGroup)
+                .groupBy(SysConfig::getServiceGroup);
+        
+        return configMapper.selectList(wrapper).stream()
+                .map(SysConfig::getServiceGroup)
+                .filter(group -> group != null && !group.isEmpty())
+                .distinct()
+                .toList();
+    }
 }

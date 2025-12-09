@@ -49,7 +49,9 @@ public class SystemConfigController {
     public Result<Void> updateConfig(@RequestBody SysConfig config, HttpServletRequest request) {
         Long userId = (Long) request.getAttribute("userId");
         systemConfigService.updateConfig(config, userId);
-        return Result.success("配置更新成功");
+        Result<Void> result = Result.success();
+        result.setMessage("配置更新成功");
+        return result;
     }
     
     /**
@@ -59,7 +61,9 @@ public class SystemConfigController {
     public Result<Void> batchUpdateConfigs(@RequestBody List<SysConfig> configs, HttpServletRequest request) {
         Long userId = (Long) request.getAttribute("userId");
         systemConfigService.batchUpdateConfigs(configs, userId);
-        return Result.success("配置批量更新成功");
+        Result<Void> result = Result.success();
+        result.setMessage("配置批量更新成功");
+        return result;
     }
     
     /**
@@ -69,5 +73,23 @@ public class SystemConfigController {
     public Result<Object> testPythonConnection() {
         Object result = systemConfigService.testPythonConnection();
         return Result.success(result);
+    }
+    
+    /**
+     * 根据服务分组获取配置
+     */
+    @GetMapping("/group/{serviceGroup}")
+    public Result<List<SysConfig>> getConfigsByGroup(@PathVariable String serviceGroup) {
+        List<SysConfig> configs = systemConfigService.getConfigsByServiceGroup(serviceGroup);
+        return Result.success(configs);
+    }
+    
+    /**
+     * 获取所有服务分组
+     */
+    @GetMapping("/groups")
+    public Result<List<String>> getAllServiceGroups() {
+        List<String> groups = systemConfigService.getAllServiceGroups();
+        return Result.success(groups);
     }
 }
