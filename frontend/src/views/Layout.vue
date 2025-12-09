@@ -41,6 +41,11 @@
           <el-icon><Key /></el-icon>
           <span>角色权限</span>
         </el-menu-item>
+
+        <el-menu-item index="/admin-export" v-if="userStore.isAdmin">
+          <el-icon><FolderOpened /></el-icon>
+          <span>导出用户记录</span>
+        </el-menu-item>
       </el-menu>
     </el-aside>
 
@@ -83,7 +88,7 @@
 import { computed, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessageBox, ElMessage } from 'element-plus'
-import { Key } from '@element-plus/icons-vue'
+import { Key, FolderOpened } from '@element-plus/icons-vue'
 import { useUserStore } from '@/store/user'
 
 const router = useRouter()

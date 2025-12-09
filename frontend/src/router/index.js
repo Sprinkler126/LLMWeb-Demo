@@ -56,6 +56,12 @@ const routes = [
         name: 'Profile',
         component: () => import('@/views/Profile.vue'),
         meta: { title: '个人信息' }
+      },
+      {
+        path: 'admin-export',
+        name: 'AdminExport',
+        component: () => import('@/views/AdminExport.vue'),
+        meta: { title: '导出用户记录', requiresAdmin: true }
       }
     ]
   }

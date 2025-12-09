@@ -88,6 +88,38 @@ public class ExportController {
     }
     
     /**
+     * 管理员导出指定用户的指定会话（JSON）
+     * 需要管理员权限
+     */
+    @GetMapping("/admin/session/{sessionId}/json")
+    public void adminExportSessionJson(
+            @PathVariable Long sessionId,
+            @RequestParam Long targetUserId,
+            @RequestParam(required = false) String token,
+            HttpServletRequest request,
+            HttpServletResponse response) {
+        Long currentUserId = getUserIdFromTokenOrRequest(token, request);
+        // 检查当前用户是否是管理员（在 Service 中实现）
+        exportService.adminExportSessionToJson(sessionId, targetUserId, currentUserId, response);
+    }
+    
+    /**
+     * 管理员导出指定用户的所有会话列表
+     * 用于搜索和选择
+     */
+    @GetMapping("/admin/user/{targetUserId}/sessions")
+    public Result<?> getUserSessions(
+            @PathVariable Long targetUserId,
+            HttpServletRequest request) {
+        Long currentUserId = (Long) request.getAttribute("userId");
+        if (currentUserId == null) {
+            return Result.error("未登录");
+        }
+        Object sessions = exportService.getUserSessionList(targetUserId, currentUserId);
+        return Result.success(sessions);
+    }
+    
+    /**
      * 测试接口 - 验证拦截器是否跳过导出路径
      */
     @GetMapping("/test")

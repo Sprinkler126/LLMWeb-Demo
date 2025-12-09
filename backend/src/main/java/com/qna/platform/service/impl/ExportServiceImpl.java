@@ -30,12 +30,19 @@ public class ExportServiceImpl implements ExportService {
 
     private final ChatSessionMapper sessionMapper;
     private final ChatMessageMapper messageMapper;
+    private final com.qna.platform.mapper.SysUserMapper userMapper;
+    private final com.qna.platform.mapper.RoleMapper roleMapper;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    public ExportServiceImpl(ChatSessionMapper sessionMapper, ChatMessageMapper messageMapper) {
+    public ExportServiceImpl(ChatSessionMapper sessionMapper, 
+                            ChatMessageMapper messageMapper,
+                            com.qna.platform.mapper.SysUserMapper userMapper,
+                            com.qna.platform.mapper.RoleMapper roleMapper) {
         this.sessionMapper = sessionMapper;
         this.messageMapper = messageMapper;
+        this.userMapper = userMapper;
+        this.roleMapper = roleMapper;
     }
 
     @Override
@@ -296,5 +303,77 @@ public class ExportServiceImpl implements ExportService {
             return "";
         }
         return value.replace("\"", "\"\"");
+    }
+    
+    @Override
+    public void adminExportSessionToJson(Long sessionId, Long targetUserId, Long currentUserId, HttpServletResponse response) {
+        // 验证当前用户是否是管理员
+        if (!isAdminUser(currentUserId)) {
+            throw new RuntimeException("无权限：需要管理员或超级管理员权限");
+        }
+        
+        // 验证会话是否属于目标用户
+        ChatSession session = sessionMapper.selectById(sessionId);
+        if (session == null) {
+            throw new RuntimeException("会话不存在");
+        }
+        if (!session.getUserId().equals(targetUserId)) {
+            throw new RuntimeException("会话不属于指定用户");
+        }
+        
+        // 获取消息列表
+        List<ChatMessage> messages = getSessionMessages(sessionId);
+        
+        // 设置响应头
+        setJsonResponseHeader(response, "user_" + targetUserId + "_session_" + sessionId + ".json");
+        
+        try (PrintWriter writer = response.getWriter()) {
+            String json = JSONUtil.toJsonPrettyStr(messages);
+            writer.write(json);
+            writer.flush();
+        } catch (IOException e) {
+            throw new RuntimeException("导出失败: " + e.getMessage());
+        }
+    }
+    
+    @Override
+    public Object getUserSessionList(Long targetUserId, Long currentUserId) {
+        // 验证当前用户是否是管理员
+        if (!isAdminUser(currentUserId)) {
+            throw new RuntimeException("无权限：需要管理员或超级管理员权限");
+        }
+        
+        // 验证目标用户是否存在
+        com.qna.platform.entity.SysUser targetUser = userMapper.selectById(targetUserId);
+        if (targetUser == null) {
+            throw new RuntimeException("目标用户不存在");
+        }
+        
+        // 查询该用户的所有会话
+        LambdaQueryWrapper<ChatSession> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ChatSession::getUserId, targetUserId)
+                .orderByDesc(ChatSession::getCreatedTime);
+        List<ChatSession> sessions = sessionMapper.selectList(wrapper);
+        
+        // 构建返回数据
+        java.util.Map<String, Object> result = new java.util.HashMap<>();
+        result.put("targetUserId", targetUserId);
+        result.put("targetUsername", targetUser.getUsername());
+        result.put("sessions", sessions);
+        result.put("totalCount", sessions.size());
+        
+        return result;
+    }
+    
+    /**
+     * 检查用户是否是管理员
+     */
+    private boolean isAdminUser(Long userId) {
+        com.qna.platform.entity.SysRole role = roleMapper.selectByUserId(userId);
+        if (role == null) {
+            return false;
+        }
+        String roleCode = role.getRoleCode();
+        return "SUPER_ADMIN".equals(roleCode) || "ADMIN".equals(roleCode);
     }
 }

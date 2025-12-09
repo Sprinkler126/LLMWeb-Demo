@@ -44,4 +44,23 @@ public interface ExportService {
      * @param response HTTP响应
      */
     void exportAllMessages(Long userId, String format, HttpServletResponse response);
+    
+    /**
+     * 管理员导出指定用户的会话消息（JSON格式）
+     *
+     * @param sessionId 会话ID
+     * @param targetUserId 目标用户ID
+     * @param currentUserId 当前管理员用户ID
+     * @param response HTTP响应
+     */
+    void adminExportSessionToJson(Long sessionId, Long targetUserId, Long currentUserId, HttpServletResponse response);
+    
+    /**
+     * 获取指定用户的会话列表
+     *
+     * @param targetUserId 目标用户ID
+     * @param currentUserId 当前用户ID
+     * @return 会话列表
+     */
+    Object getUserSessionList(Long targetUserId, Long currentUserId);
 }
