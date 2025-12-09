@@ -47,25 +47,5 @@ CREATE TABLE IF NOT EXISTS llm_compliance_result (
     FOREIGN KEY (task_id) REFERENCES llm_compliance_task(id) ON DELETE CASCADE
 ) COMMENT='LLM合规检测结果详情表';
 
--- 添加模型配置表（用于存储可用的LLM模型配置）
-CREATE TABLE IF NOT EXISTS llm_model_config (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '配置ID',
-    model_name VARCHAR(100) NOT NULL UNIQUE COMMENT '模型名称',
-    model_provider VARCHAR(50) NOT NULL COMMENT '模型提供商',
-    api_endpoint VARCHAR(500) COMMENT 'API端点地址',
-    model_description VARCHAR(500) COMMENT '模型描述',
-    is_enabled INT DEFAULT 1 COMMENT '是否启用：0-禁用，1-启用',
-    display_order INT DEFAULT 0 COMMENT '显示顺序',
-    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    updated_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    INDEX idx_is_enabled (is_enabled)
-) COMMENT='LLM模型配置表';
-
--- 插入默认的模型配置
-INSERT INTO llm_model_config (model_name, model_provider, model_description, is_enabled, display_order) VALUES
-('gpt-3.5-turbo', 'openai', 'OpenAI GPT-3.5 Turbo模型', 1, 1),
-('gpt-4', 'openai', 'OpenAI GPT-4模型', 1, 2),
-('gpt-4-turbo', 'openai', 'OpenAI GPT-4 Turbo模型', 1, 3),
-('gpt-4o', 'openai', 'OpenAI GPT-4o模型', 1, 4),
-('claude-3-opus', 'anthropic', 'Anthropic Claude 3 Opus模型', 0, 5),
-('claude-3-sonnet', 'anthropic', 'Anthropic Claude 3 Sonnet模型', 0, 6);
+-- 注意：使用现有的 api_config 表作为模型配置表
+-- 不再创建单独的 llm_model_config 表

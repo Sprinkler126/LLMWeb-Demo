@@ -20,10 +20,10 @@ public class CreateLlmComplianceTaskDTO {
     private String taskName;
 
     /**
-     * 测试的LLM模型名称
+     * API配置ID
      */
-    @NotBlank(message = "模型名称不能为空")
-    private String modelName;
+    @NotNull(message = "API配置ID不能为空")
+    private Long apiConfigId;
 
     /**
      * 问题集JSON内容

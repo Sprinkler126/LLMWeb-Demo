@@ -28,7 +28,12 @@ public class LlmComplianceTask implements Serializable {
     private String taskName;
 
     /**
-     * 测试的LLM模型名称
+     * API配置ID（关联api_config表）
+     */
+    private Long apiConfigId;
+
+    /**
+     * 测试的LLM模型名称（快照数据）
      */
     private String modelName;
 

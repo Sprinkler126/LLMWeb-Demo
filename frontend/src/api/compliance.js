@@ -67,12 +67,12 @@ export function triggerCheck(taskId) {
 // ========== LLM合规检测API ==========
 
 /**
- * 获取可用的LLM模型列表
+ * 获取可用的API配置列表（用于模型选择）
  * @returns {Promise}
  */
-export function getAvailableModels() {
+export function getAvailableApiConfigs() {
   return request({
-    url: '/llm-compliance/models',
+    url: '/llm-compliance/api-configs',
     method: 'get'
   })
 }

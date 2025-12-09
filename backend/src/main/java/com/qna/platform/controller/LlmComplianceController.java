@@ -4,9 +4,9 @@ import com.qna.platform.annotation.RequirePermission;
 import com.qna.platform.common.PageResult;
 import com.qna.platform.common.Result;
 import com.qna.platform.dto.CreateLlmComplianceTaskDTO;
+import com.qna.platform.entity.ApiConfig;
 import com.qna.platform.entity.LlmComplianceTask;
 import com.qna.platform.entity.LlmComplianceResult;
-import com.qna.platform.entity.LlmModelConfig;
 import com.qna.platform.service.LlmComplianceService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -30,12 +30,12 @@ public class LlmComplianceController {
     private final LlmComplianceService llmComplianceService;
 
     /**
-     * 获取可用的LLM模型列表
+     * 获取可用的API配置列表（用于模型选择）
      */
-    @GetMapping("/models")
-    public Result<List<LlmModelConfig>> getAvailableModels() {
-        List<LlmModelConfig> models = llmComplianceService.getAvailableModels();
-        return Result.success(models);
+    @GetMapping("/api-configs")
+    public Result<List<ApiConfig>> getAvailableApiConfigs() {
+        List<ApiConfig> configs = llmComplianceService.getAvailableApiConfigs();
+        return Result.success(configs);
     }
 
     /**

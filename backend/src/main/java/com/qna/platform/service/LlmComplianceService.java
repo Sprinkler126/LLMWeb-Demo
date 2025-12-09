@@ -2,9 +2,9 @@ package com.qna.platform.service;
 
 import com.qna.platform.common.PageResult;
 import com.qna.platform.dto.CreateLlmComplianceTaskDTO;
+import com.qna.platform.entity.ApiConfig;
 import com.qna.platform.entity.LlmComplianceTask;
 import com.qna.platform.entity.LlmComplianceResult;
-import com.qna.platform.entity.LlmModelConfig;
 
 import java.util.List;
 
@@ -16,11 +16,11 @@ import java.util.List;
 public interface LlmComplianceService {
 
     /**
-     * 获取可用的LLM模型列表
+     * 获取可用的API配置列表（用于模型选择）
      *
-     * @return 模型列表
+     * @return API配置列表
      */
-    List<LlmModelConfig> getAvailableModels();
+    List<ApiConfig> getAvailableApiConfigs();
 
     /**
      * 创建LLM合规检测任务

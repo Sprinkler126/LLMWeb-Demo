@@ -9,20 +9,23 @@
               <el-input v-model="createForm.taskName" placeholder="请输入任务名称" />
             </el-form-item>
 
-            <el-form-item label="选择模型">
-              <el-select v-model="createForm.modelName" placeholder="请选择LLM模型" style="width: 100%">
+            <el-form-item label="选择API配置">
+              <el-select v-model="createForm.apiConfigId" placeholder="请选择API配置" style="width: 100%">
                 <el-option
-                  v-for="model in availableModels"
-                  :key="model.id"
-                  :label="`${model.modelName} (${model.modelProvider})`"
-                  :value="model.modelName"
+                  v-for="config in availableApiConfigs"
+                  :key="config.id"
+                  :label="`${config.configName} (${config.modelName})`"
+                  :value="config.id"
                 >
-                  <span>{{ model.modelName }}</span>
+                  <span>{{ config.configName }}</span>
                   <span style="float: right; color: #8492a6; font-size: 13px">
-                    {{ model.modelProvider }}
+                    {{ config.modelName }} - {{ config.provider }}
                   </span>
                 </el-option>
               </el-select>
+              <div class="form-help">
+                从API配置管理中选择已配置的模型
+              </div>
             </el-form-item>
 
             <el-form-item label="问题集JSON">
@@ -204,7 +207,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 import {
-  getAvailableModels,
+  getAvailableApiConfigs,
   createLlmComplianceTask,
   startLlmComplianceTask,
   getLlmComplianceTask,
@@ -214,7 +217,7 @@ import {
 } from '@/api/compliance'
 
 const activeTab = ref('create')
-const availableModels = ref([])
+const availableApiConfigs = ref([])
 const creating = ref(false)
 const loadingTasks = ref(false)
 const tasks = ref([])
@@ -224,7 +227,7 @@ const detailDialogVisible = ref(false)
 
 const createForm = reactive({
   taskName: '',
-  modelName: '',
+  apiConfigId: null,
   questionSetJson: ''
 })
 
@@ -234,16 +237,16 @@ const pagination = reactive({
   total: 0
 })
 
-// 加载可用模型
-const loadModels = async () => {
+// 加载可用API配置
+const loadApiConfigs = async () => {
   try {
-    const { data } = await getAvailableModels()
-    availableModels.value = data || []
+    const { data } = await getAvailableApiConfigs()
+    availableApiConfigs.value = data || []
     if (data && data.length > 0) {
-      createForm.modelName = data[0].modelName
+      createForm.apiConfigId = data[0].id
     }
   } catch (error) {
-    ElMessage.error('加载模型列表失败')
+    ElMessage.error('加载API配置列表失败')
   }
 }
 
@@ -293,8 +296,8 @@ const handleCreate = async () => {
     ElMessage.warning('请输入任务名称')
     return
   }
-  if (!createForm.modelName) {
-    ElMessage.warning('请选择模型')
+  if (!createForm.apiConfigId) {
+    ElMessage.warning('请选择API配置')
     return
   }
   if (!createForm.questionSetJson) {
@@ -422,7 +425,7 @@ const formatDate = (dateStr) => {
 }
 
 onMounted(() => {
-  loadModels()
+  loadApiConfigs()
   loadTasks()
 })
 </script>

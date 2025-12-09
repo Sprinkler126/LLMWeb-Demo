@@ -7,12 +7,12 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.qna.platform.common.PageResult;
 import com.qna.platform.dto.CreateLlmComplianceTaskDTO;
+import com.qna.platform.entity.ApiConfig;
 import com.qna.platform.entity.LlmComplianceTask;
 import com.qna.platform.entity.LlmComplianceResult;
-import com.qna.platform.entity.LlmModelConfig;
+import com.qna.platform.mapper.ApiConfigMapper;
 import com.qna.platform.mapper.LlmComplianceTaskMapper;
 import com.qna.platform.mapper.LlmComplianceResultMapper;
-import com.qna.platform.mapper.LlmModelConfigMapper;
 import com.qna.platform.service.LlmComplianceService;
 import com.qna.platform.service.SystemConfigService;
 import lombok.RequiredArgsConstructor;
@@ -40,7 +40,7 @@ public class LlmComplianceServiceImpl implements LlmComplianceService {
 
     private final LlmComplianceTaskMapper taskMapper;
     private final LlmComplianceResultMapper resultMapper;
-    private final LlmModelConfigMapper modelConfigMapper;
+    private final ApiConfigMapper apiConfigMapper;
     private final SystemConfigService configService;
     private final OkHttpClient httpClient = new OkHttpClient.Builder()
             .connectTimeout(Duration.ofSeconds(30))
@@ -50,11 +50,11 @@ public class LlmComplianceServiceImpl implements LlmComplianceService {
     private static final MediaType JSON_MEDIA_TYPE = MediaType.parse("application/json; charset=utf-8");
 
     @Override
-    public List<LlmModelConfig> getAvailableModels() {
-        LambdaQueryWrapper<LlmModelConfig> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(LlmModelConfig::getIsEnabled, 1)
-                .orderByAsc(LlmModelConfig::getDisplayOrder);
-        return modelConfigMapper.selectList(wrapper);
+    public List<ApiConfig> getAvailableApiConfigs() {
+        LambdaQueryWrapper<ApiConfig> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ApiConfig::getStatus, 1)
+                .orderByDesc(ApiConfig::getCreatedTime);
+        return apiConfigMapper.selectList(wrapper);
     }
 
     @Override
@@ -71,19 +71,21 @@ public class LlmComplianceServiceImpl implements LlmComplianceService {
         // 统计总问题数
         int totalQuestions = countTotalQuestions(questionSet);
 
-        // 获取模型信息
-        LambdaQueryWrapper<LlmModelConfig> modelWrapper = new LambdaQueryWrapper<>();
-        modelWrapper.eq(LlmModelConfig::getModelName, dto.getModelName());
-        LlmModelConfig modelConfig = modelConfigMapper.selectOne(modelWrapper);
-        if (modelConfig == null) {
-            throw new RuntimeException("模型配置不存在");
+        // 获取API配置信息
+        ApiConfig apiConfig = apiConfigMapper.selectById(dto.getApiConfigId());
+        if (apiConfig == null) {
+            throw new RuntimeException("API配置不存在");
+        }
+        if (apiConfig.getStatus() != 1) {
+            throw new RuntimeException("API配置已禁用");
         }
 
         // 创建任务
         LlmComplianceTask task = new LlmComplianceTask();
         task.setTaskName(dto.getTaskName());
-        task.setModelName(dto.getModelName());
-        task.setModelProvider(modelConfig.getModelProvider());
+        task.setApiConfigId(dto.getApiConfigId());
+        task.setModelName(apiConfig.getModelName());  // 保存快照数据
+        task.setModelProvider(apiConfig.getProvider());  // 保存快照数据
         task.setQuestionSetJson(dto.getQuestionSetJson());
         task.setTotalQuestions(totalQuestions);
         task.setCompletedQuestions(0);
@@ -206,7 +208,7 @@ public class LlmComplianceServiceImpl implements LlmComplianceService {
         long startTime = System.currentTimeMillis();
 
         // 调用LLM模型获取回答
-        String llmResponse = callLlmModel(task.getModelName(), questionText);
+        String llmResponse = callLlmModel(task.getId(), questionText);
 
         // 记录响应时间
         int responseTime = (int) (System.currentTimeMillis() - startTime);
@@ -242,16 +244,28 @@ public class LlmComplianceServiceImpl implements LlmComplianceService {
     /**
      * 调用LLM模型
      */
-    private String callLlmModel(String modelName, String question) throws IOException {
-        // 从配置中获取OpenAI API密钥
-        String apiKey = configService.getConfigValue("openai.api.key", "");
-        if (apiKey.isEmpty()) {
-            throw new RuntimeException("OpenAI API密钥未配置");
+    private String callLlmModel(Long taskId, String question) throws IOException {
+        // 获取任务信息
+        LlmComplianceTask task = taskMapper.selectById(taskId);
+        if (task == null) {
+            throw new RuntimeException("任务不存在");
+        }
+
+        // 获取API配置
+        ApiConfig apiConfig = apiConfigMapper.selectById(task.getApiConfigId());
+        if (apiConfig == null) {
+            throw new RuntimeException("API配置不存在");
+        }
+
+        // 获取API密钥
+        String apiKey = apiConfig.getApiKey();
+        if (apiKey == null || apiKey.isEmpty()) {
+            throw new RuntimeException("API密钥未配置");
         }
 
         // 构建请求
         JSONObject requestBody = new JSONObject();
-        requestBody.set("model", modelName);
+        requestBody.set("model", apiConfig.getModelName());
         
         JSONArray messages = new JSONArray();
         JSONObject message = new JSONObject();
@@ -260,8 +274,23 @@ public class LlmComplianceServiceImpl implements LlmComplianceService {
         messages.add(message);
         requestBody.set("messages", messages);
 
+        // 可选参数
+        if (apiConfig.getMaxTokens() != null) {
+            requestBody.set("max_tokens", apiConfig.getMaxTokens());
+        }
+        if (apiConfig.getTemperature() != null) {
+            requestBody.set("temperature", apiConfig.getTemperature());
+        }
+
+        // 使用API配置中的endpoint
+        String endpoint = apiConfig.getApiEndpoint();
+        if (endpoint == null || endpoint.isEmpty()) {
+            // 兼容旧配置，使用默认的OpenAI endpoint
+            endpoint = "https://api.openai.com/v1/chat/completions";
+        }
+
         Request request = new Request.Builder()
-                .url("https://api.openai.com/v1/chat/completions")
+                .url(endpoint)
                 .post(RequestBody.create(requestBody.toString(), JSON_MEDIA_TYPE))
                 .addHeader("Content-Type", "application/json")
                 .addHeader("Authorization", "Bearer " + apiKey)
