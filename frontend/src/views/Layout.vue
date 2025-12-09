@@ -138,7 +138,7 @@ const handleCommand = (command) => {
       ElMessage.success('已退出登录')
     }).catch(() => {})
   } else if (command === 'profile') {
-    ElMessage.info('个人信息功能开发中...')
+    router.push('/profile')
   }
 }
 </script>

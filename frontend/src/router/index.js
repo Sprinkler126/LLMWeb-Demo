@@ -50,6 +50,12 @@ const routes = [
         name: 'RolePermission',
         component: () => import('@/views/RolePermission.vue'),
         meta: { title: '角色权限配置', requiresAdmin: true }
+      },
+      {
+        path: 'profile',
+        name: 'Profile',
+        component: () => import('@/views/Profile.vue'),
+        meta: { title: '个人信息' }
       }
     ]
   }
