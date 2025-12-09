@@ -24,7 +24,12 @@
 
         <el-menu-item index="/compliance" v-if="userStore.hasCompliancePermission">
           <el-icon><DocumentChecked /></el-icon>
-          <span>合规检测</span>
+          <span>合规检测(简单)</span>
+        </el-menu-item>
+
+        <el-menu-item index="/compliance-test" v-if="userStore.hasCompliancePermission">
+          <el-icon><DataAnalysis /></el-icon>
+          <span>LLM合规测试</span>
         </el-menu-item>
 
         <el-menu-item index="/export">

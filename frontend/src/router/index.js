@@ -31,7 +31,13 @@ const routes = [
         path: 'compliance',
         name: 'Compliance',
         component: () => import('@/views/Compliance.vue'),
-        meta: { title: '合规检测', requiresPermission: true }
+        meta: { title: '合规检测(简单)', requiresPermission: true }
+      },
+      {
+        path: 'compliance-test',
+        name: 'ComplianceTest',
+        component: () => import('@/views/ComplianceTest.vue'),
+        meta: { title: 'LLM合规测试', requiresPermission: true }
       },
       {
         path: 'export',
