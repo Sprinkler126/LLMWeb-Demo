@@ -47,7 +47,9 @@ public class UserProfileController {
         }
         
         userProfileService.updateProfile(userId, dto);
-        return Result.success("个人信息更新成功");
+        Result<Void> result = Result.success();
+        result.setMessage("个人信息更新成功");
+        return result;
     }
     
     /**
@@ -61,7 +63,9 @@ public class UserProfileController {
         }
         
         userProfileService.updatePassword(userId, dto);
-        return Result.success("密码修改成功");
+        Result<Void> result = Result.success();
+        result.setMessage("密码修改成功");
+        return result;
     }
     
     /**
