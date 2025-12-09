@@ -12,29 +12,36 @@
         unique-opened
         @select="handleMenuSelect"
       >
+
+        <el-menu-item index="/dashboard" v-if="userStore.isAdmin">
+          <el-icon><DataAnalysis /></el-icon>
+          <span>平台数据</span>
+        </el-menu-item>
+
         <el-menu-item index="/chat">
           <el-icon><ChatDotRound /></el-icon>
           <span>对话</span>
         </el-menu-item>
 
-        <el-menu-item index="/api-config">
-          <el-icon><Setting /></el-icon>
-          <span>API配置</span>
+        <el-menu-item index="/export">
+          <el-icon><Download /></el-icon>
+          <span>个人数据导出</span>
         </el-menu-item>
+
+        <el-menu-item index="/admin-export" v-if="userStore.isAdmin">
+          <el-icon><FolderOpened /></el-icon>
+          <span>用户数据导出</span>
+        </el-menu-item>
+
 
         <el-menu-item index="/compliance" v-if="userStore.hasCompliancePermission">
           <el-icon><DocumentChecked /></el-icon>
-          <span>合规检测(简单)</span>
+          <span>合规检测</span>
         </el-menu-item>
 
         <el-menu-item index="/compliance-test" v-if="userStore.hasCompliancePermission">
           <el-icon><DataAnalysis /></el-icon>
-          <span>LLM合规测试</span>
-        </el-menu-item>
-
-        <el-menu-item index="/export">
-          <el-icon><Download /></el-icon>
-          <span>数据导出</span>
+          <span>LLM合规审计</span>
         </el-menu-item>
 
         <el-menu-item index="/user-management" v-if="userStore.isAdmin">
@@ -44,17 +51,12 @@
 
         <el-menu-item index="/role-permission" v-if="userStore.isAdmin">
           <el-icon><Key /></el-icon>
-          <span>角色权限</span>
+          <span>角色权限管理</span>
         </el-menu-item>
 
-        <el-menu-item index="/admin-export" v-if="userStore.isAdmin">
-          <el-icon><FolderOpened /></el-icon>
-          <span>导出用户记录</span>
-        </el-menu-item>
-
-        <el-menu-item index="/dashboard" v-if="userStore.isAdmin">
-          <el-icon><DataAnalysis /></el-icon>
-          <span>平台数据</span>
+        <el-menu-item index="/api-config">
+          <el-icon><Setting /></el-icon>
+          <span>API配置</span>
         </el-menu-item>
 
         <el-menu-item index="/system-config" v-if="userStore.role === 'SUPER_ADMIN'">

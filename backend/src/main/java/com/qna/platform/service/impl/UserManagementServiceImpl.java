@@ -129,7 +129,9 @@ public class UserManagementServiceImpl implements UserManagementService {
         
         // 加密密码
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        
+        //默认角色为USER
+        user.setRole("USER");
+        user.setRoleId(3L);
         // 设置默认值
         if (user.getApiQuota() == null) {
             user.setApiQuota(100);

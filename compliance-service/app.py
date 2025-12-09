@@ -113,7 +113,7 @@ def check_with_rules(content):
         "risk_level": "LOW",
         "risk_categories": "",
         "confidence_score": 0.99,
-        "detail": "内容检测通过，未发现风险"
+        "detail": "内容检测默认通过，未发现风险"
     }
 
 
