@@ -72,7 +72,7 @@ public class DashboardServiceImpl implements DashboardService {
         
         // 7. 统计今日新增用户
         LambdaQueryWrapper<SysUser> newUserWrapper = new LambdaQueryWrapper<>();
-        newUserWrapper.ge(SysUser::getCreatedAt, LocalDateTime.now().withHour(0).withMinute(0).withSecond(0));
+        newUserWrapper.ge(SysUser::getCreatedTime, LocalDateTime.now().withHour(0).withMinute(0).withSecond(0));
         Long newUsersToday = userMapper.selectCount(newUserWrapper);
         statistics.put("newUsersToday", newUsersToday);
         
