@@ -50,8 +50,8 @@ public class UserProfileServiceImpl implements UserProfileService {
                 .apiQuota(user.getApiQuota())
                 .apiUsed(user.getApiUsed())
                 .hasCompliancePermission(user.getHasCompliancePermission())
-                .createdAt(user.getCreatedAt())
-                .lastLoginTime(user.getLastLoginTime())
+                .createdAt(user.getCreatedTime())
+                .lastLoginTime(user.getUpdatedTime())  // 使用更新时间作为最后活动时间
                 .build();
     }
     
