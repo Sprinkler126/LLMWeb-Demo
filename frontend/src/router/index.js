@@ -62,6 +62,12 @@ const routes = [
         name: 'AdminExport',
         component: () => import('@/views/AdminExport.vue'),
         meta: { title: '导出用户记录', requiresAdmin: true }
+      },
+      {
+        path: 'dashboard',
+        name: 'Dashboard',
+        component: () => import('@/views/Dashboard.vue'),
+        meta: { title: '平台数据', requiresAdmin: true }
       }
     ]
   }
