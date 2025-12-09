@@ -51,3 +51,23 @@ export function testPythonConnection() {
     method: 'post'
   })
 }
+
+/**
+ * 根据服务分组获取配置
+ */
+export function getConfigsByGroup(serviceGroup) {
+  return request({
+    url: `/admin/system-config/group/${serviceGroup}`,
+    method: 'get'
+  })
+}
+
+/**
+ * 获取所有服务分组
+ */
+export function getAllServiceGroups() {
+  return request({
+    url: '/admin/system-config/groups',
+    method: 'get'
+  })
+}
