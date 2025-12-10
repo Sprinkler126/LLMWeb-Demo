@@ -33,4 +33,14 @@ public class ChatRequestDTO {
      * 会话标题（新建会话时使用）
      */
     private String sessionTitle;
+    
+    /**
+     * 机器人模板ID
+     */
+    private Long botTemplateId;
+    
+    /**
+     * 自定义系统消息
+     */
+    private String systemMessage;
 }

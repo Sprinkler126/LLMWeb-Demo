@@ -17,13 +17,13 @@ CREATE INDEX IF NOT EXISTS idx_display_order ON sys_config(display_order);
 
 -- 插入示例：未来可扩展的其他Python服务配置（当前注释掉，需要时可启用）
 -- 例如：文本分析服务
--- INSERT INTO sys_config (config_key, config_value, config_desc, config_type, service_group, display_order) VALUES
--- ('python.nlp.endpoint', 'http://localhost:5001/api/nlp/analyze', 'Python文本分析接口地址', 'STRING', 'nlp', 1),
--- ('python.nlp.timeout', '15000', 'Python文本分析接口超时时间（毫秒）', 'NUMBER', 'nlp', 2),
--- ('python.nlp.enabled', 'false', '是否启用Python文本分析', 'BOOLEAN', 'nlp', 3);
+INSERT INTO sys_config (config_key, config_value, config_desc, config_type, service_group, display_order) VALUES
+('python.nlp.endpoint', 'http://localhost:5001/api/nlp/analyze', 'Python文本分析接口地址', 'STRING', 'nlp', 1),
+('python.nlp.timeout', '15000', 'Python文本分析接口超时时间（毫秒）', 'NUMBER', 'nlp', 2),
+('python.nlp.enabled', 'false', '是否启用Python文本分析', 'BOOLEAN', 'nlp', 3);
 
--- 例如：数据分析服务
--- INSERT INTO sys_config (config_key, config_value, config_desc, config_type, service_group, display_order) VALUES
--- ('python.analytics.endpoint', 'http://localhost:5002/api/analytics/compute', 'Python数据分析接口地址', 'STRING', 'analytics', 1),
--- ('python.analytics.timeout', '60000', 'Python数据分析接口超时时间（毫秒）', 'NUMBER', 'analytics', 2),
--- ('python.analytics.enabled', 'false', '是否启用Python数据分析', 'BOOLEAN', 'analytics', 3);
+例如：数据分析服务
+INSERT INTO sys_config (config_key, config_value, config_desc, config_type, service_group, display_order) VALUES
+('python.analytics.endpoint', 'http://localhost:5002/api/analytics/compute', 'Python数据分析接口地址', 'STRING', 'analytics', 1),
+('python.analytics.timeout', '60000', 'Python数据分析接口超时时间（毫秒）', 'NUMBER', 'analytics', 2),
+('python.analytics.enabled', 'false', '是否启用Python数据分析', 'BOOLEAN', 'analytics', 3);

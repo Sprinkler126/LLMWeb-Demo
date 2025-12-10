@@ -25,6 +25,7 @@ public class ChatServiceImpl implements ChatService {
     private final ChatSessionMapper sessionMapper;
     private final ChatMessageMapper messageMapper;
     private final ApiConfigMapper apiConfigMapper;
+    private final ChatBotTemplateMapper botTemplateMapper;
     private final SysUserMapper userMapper;
     private final AiApiClient aiApiClient;
     private final com.qna.platform.util.ComplianceClient complianceClient;
@@ -33,12 +34,14 @@ public class ChatServiceImpl implements ChatService {
                           ChatMessageMapper messageMapper,
                           ApiConfigMapper apiConfigMapper,
                           SysUserMapper userMapper,
+                            ChatBotTemplateMapper botTemplateMapper,
                           AiApiClient aiApiClient,
                           com.qna.platform.util.ComplianceClient complianceClient) {
         this.sessionMapper = sessionMapper;
         this.messageMapper = messageMapper;
         this.apiConfigMapper = apiConfigMapper;
         this.userMapper = userMapper;
+        this.botTemplateMapper = botTemplateMapper;
         this.aiApiClient = aiApiClient;
         this.complianceClient = complianceClient;
     }
@@ -76,11 +79,24 @@ public class ChatServiceImpl implements ChatService {
             session = new ChatSession();
             session.setUserId(userId);
             session.setApiConfigId(requestDTO.getApiConfigId());
-            session.setSessionTitle(StrUtil.isBlank(requestDTO.getSessionTitle()) 
-                    ? "会话 - " + LocalDateTime.now() 
+            session.setSessionTitle(StrUtil.isBlank(requestDTO.getSessionTitle())
+                    ? "会话 - " + LocalDateTime.now()
                     : requestDTO.getSessionTitle());
             session.setSessionStatus("ACTIVE");
             session.setMessageCount(0);
+
+            // 设置机器人模板和系统消息
+            session.setBotTemplateId(requestDTO.getBotTemplateId());
+            if (StrUtil.isNotBlank(requestDTO.getSystemMessage())) {
+                session.setSystemMessage(requestDTO.getSystemMessage());
+            } else if (requestDTO.getBotTemplateId() != null) {
+                // 从模板中获取系统消息
+                ChatBotTemplate template = botTemplateMapper.selectById(requestDTO.getBotTemplateId());
+                if (template != null) {
+                    session.setSystemMessage(template.getSystemMessage());
+                }
+            }
+
             sessionMapper.insert(session);
         } else {
             session = sessionMapper.selectById(requestDTO.getSessionId());
@@ -104,6 +120,20 @@ public class ChatServiceImpl implements ChatService {
 
         // 获取会话历史（最近10条）
         List<Map<String, String>> messages = buildMessageHistory(session.getId());
+        // 添加系统消息（优先级：请求中自定义 > 会话级 > 模板级）
+        if (StrUtil.isNotBlank(requestDTO.getSystemMessage())) {
+            // 使用请求中指定的系统消息
+            messages.add(0, Map.of("role", "system", "content", requestDTO.getSystemMessage()));
+        } else if (StrUtil.isNotBlank(session.getSystemMessage())) {
+            // 使用会话级系统消息
+            messages.add(0, Map.of("role", "system", "content", session.getSystemMessage()));
+        } else if (session.getBotTemplateId() != null) {
+            // 从模板中获取系统消息
+            ChatBotTemplate template = botTemplateMapper.selectById(session.getBotTemplateId());
+            if (template != null && StrUtil.isNotBlank(template.getSystemMessage())) {
+                messages.add(0, Map.of("role", "system", "content", template.getSystemMessage()));
+            }
+        }
         messages.add(Map.of("role", "user", "content", requestDTO.getMessage()));
 
         // 调用AI API

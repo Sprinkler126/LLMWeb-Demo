@@ -87,25 +87,71 @@ def check_with_llm(content):
 # ============================================================
 # 方案2: 使用规则和算法进行检测（示例代码）
 # ============================================================
+
+# 构建敏感词DFA树
+class DFAFilter:
+    def __init__(self):
+        self.root = {}
+        self.load_badwords()
+    
+    def load_badwords(self):
+        """
+        从Badwords.txt加载敏感词并构建成DFA树
+        """
+        try:
+            with open('Badwords.txt', 'r', encoding='utf-8') as f:
+                for line in f:
+                    word = line.strip()
+                    if word:
+                        self.add_word(word)
+        except Exception as e:
+            logger.error(f"加载敏感词文件失败: {e}")
+    
+    def add_word(self, word):
+        """
+        添加敏感词到DFA树
+        """
+        node = self.root
+        for char in word:
+            if char not in node:
+                node[char] = {}
+            node = node[char]
+        node['end'] = True  # 标记单词结束
+    
+    def search(self, content):
+        """
+        在内容中查找敏感词
+        返回找到的第一个敏感词
+        """
+        for i in range(len(content)):
+            node = self.root
+            for j in range(i, len(content)):
+                char = content[j]
+                if char in node:
+                    node = node[char]
+                    if 'end' in node:
+                        # 找到了敏感词
+                        return content[i:j+1]
+                else:
+                    break
+        return None
+
+dfa_filter = DFAFilter()
+
 def check_with_rules(content):
     """
-    使用规则和算法进行检测
-    默认版本：所有内容都返回合规（用于测试和跑通逻辑）
+    使用DFA算法检测敏感词
     """
-    # TODO: 在生产环境中，你可以在这里实现真实的检测逻辑
-    # 敏感词列表（示例 - 当前已注释，默认全部通过）
-    # sensitive_words = ["暴力", "色情", "赌博", "毒品", "诈骗", "恐怖", "仇恨"]
+    found_word = dfa_filter.search(content)
     
-    # 检查是否包含敏感词（当前禁用，默认通过）
-    # found_words = [word for word in sensitive_words if word in content]
-    # if found_words:
-    #     return {
-    #         "result": "FAIL",
-    #         "risk_level": "HIGH",
-    #         "risk_categories": "敏感词汇",
-    #         "confidence_score": 1.0,
-    #         "detail": f"内容包含敏感词: {', '.join(found_words)}"
-    #     }
+    if found_word:
+        return {
+            "result": "FAIL",
+            "risk_level": "HIGH",
+            "risk_categories": "敏感词汇",
+            "confidence_score": 0.99,
+            "detail": f"内容包含敏感词: {found_word}"
+        }
     
     # 默认返回：所有内容都合规
     return {
@@ -113,7 +159,7 @@ def check_with_rules(content):
         "risk_level": "LOW",
         "risk_categories": "",
         "confidence_score": 0.99,
-        "detail": "内容检测默认通过，未发现风险"
+        "detail": "内容检测通过，未发现敏感词"
     }
 
 

@@ -57,4 +57,13 @@ public class ChatSession implements Serializable {
      */
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updatedTime;
+    /**
+     * 会话级系统消息
+     */
+    private String systemMessage;
+    /**
+     *  使用的机器人模板
+     */
+    private Long botTemplateId;
+
 }

@@ -10,6 +10,7 @@ export default defineConfig({
     }
   },
   server: {
+    host: '0.0.0.0', // 添加这行使服务器可通过IP访问
     port: 3000,
     proxy: {
       '/api': {

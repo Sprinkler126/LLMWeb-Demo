@@ -43,3 +43,5 @@ Thumbs.db
 # Temp
 temp/
 *.tmp
+/frontend/package-lock.json
+/package-lock.json
