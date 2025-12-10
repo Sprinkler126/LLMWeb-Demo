@@ -67,6 +67,18 @@ export const useUserStore = defineStore('user', {
       localStorage.setItem('userInfo', JSON.stringify(this.userInfo))
     },
 
+    setApiUsed(used) {
+      this.apiUsed = used
+      this.userInfo.apiUsed = used
+      localStorage.setItem('userInfo', JSON.stringify(this.userInfo))
+    },
+
+    setApiQuota(quota) {
+      this.apiQuota = quota
+      this.userInfo.apiQuota = quota
+      localStorage.setItem('userInfo', JSON.stringify(this.userInfo))
+    },
+
     logout() {
       this.token = ''
       this.userInfo = {}

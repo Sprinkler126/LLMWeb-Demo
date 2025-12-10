@@ -135,9 +135,38 @@ public class UserProfileServiceImpl implements UserProfileService {
     }
 
     @Override
-    public void checkAndResetApiQuota(Long userId) {
+    @Transactional
+    public Map<String, Object> checkAndResetApiQuota(Long userId) {
         SysUser user = userMapper.selectById(userId);
-        checkAndResetApiQuota(user);
+        if (user == null) {
+            throw new RuntimeException("用户不存在");
+        }
+        
+        Map<String, Object> result = new HashMap<>();
+        boolean wasReset = false;
+        
+        // 检查是否需要重置
+        if (user.getApiUsed() != null && user.getApiUsed() > 0
+                && user.getQuotaResetTime() != null
+                && LocalDateTime.now().isAfter(user.getQuotaResetTime())) {
+            
+            // 重置配额
+            user.setApiUsed(0);
+            // 将重置时间设置为今天的24:00（即明天的00:00）
+            user.setQuotaResetTime(LocalDateTime.of(LocalDate.now().plusDays(1), LocalTime.MIDNIGHT));
+            userMapper.updateById(user);
+            wasReset = true;
+        }
+        
+        // 返回详细信息
+        result.put("reset", wasReset);
+        result.put("apiQuota", user.getApiQuota());
+        result.put("apiUsed", user.getApiUsed());
+        result.put("remaining", user.getApiQuota() - user.getApiUsed());
+        result.put("nextResetTime", user.getQuotaResetTime());
+        result.put("message", wasReset ? "配额已重置" : "配额无需重置");
+        
+        return result;
     }
 
 

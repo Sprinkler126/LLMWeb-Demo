@@ -47,6 +47,7 @@ public interface UserProfileService {
      * 检查并重置用户API配额
      *
      * @param userId 用户ID
+     * @return 配额检查结果，包含是否重置、剩余配额、下次重置时间等信息
      */
-    void checkAndResetApiQuota(Long userId);
+    java.util.Map<String, Object> checkAndResetApiQuota(Long userId);
 }

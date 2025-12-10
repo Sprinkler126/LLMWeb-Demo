@@ -84,11 +84,17 @@ public class UserProfileController {
 
     /**
      * 检查并重置API配额
+     * 
+     * @return 配额检查结果，包含是否重置、当前配额、剩余配额、下次重置时间等
      */
     @PostMapping("/check-quota")
-    public Result<String> checkAndResetApiQuota(HttpServletRequest request) {
+    public Result<java.util.Map<String, Object>> checkAndResetApiQuota(HttpServletRequest request) {
         Long userId = (Long) request.getAttribute("userId");
-        userProfileService.checkAndResetApiQuota(userId);
-        return Result.success("配额检查完成");
+        if (userId == null) {
+            return Result.error("未登录");
+        }
+        
+        java.util.Map<String, Object> result = userProfileService.checkAndResetApiQuota(userId);
+        return Result.success(result);
     }
 }

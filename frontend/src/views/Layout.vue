@@ -81,6 +81,16 @@
           <div class="api-usage">
             <el-icon><Coin /></el-icon>
             <span>API额度: {{ userStore.apiUsed }} / {{ userStore.apiQuota }}</span>
+            <el-tooltip content="刷新配额" placement="bottom">
+              <el-button 
+                :icon="Refresh" 
+                circle 
+                size="small" 
+                @click="handleRefreshQuota"
+                :loading="refreshing"
+                style="margin-left: 8px"
+              />
+            </el-tooltip>
           </div>
 
           <el-dropdown @command="handleCommand">
@@ -107,15 +117,17 @@
 </template>
 
 <script setup>
-import { computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessageBox, ElMessage } from 'element-plus'
-import { Key, FolderOpened, DataAnalysis, Tools, ChatDotRound } from '@element-plus/icons-vue'
+import { Key, FolderOpened, DataAnalysis, Tools, ChatDotRound, Refresh } from '@element-plus/icons-vue'
 import { useUserStore } from '@/store/user'
+import { checkAndResetApiQuota } from '@/api/profile'
 
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
+const refreshing = ref(false)
 
 const defaultAvatar = 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png'
 
@@ -166,6 +178,41 @@ const handleCommand = (command) => {
     }).catch(() => {})
   } else if (command === 'profile') {
     router.push('/profile')
+  }
+}
+
+// 刷新API配额
+const handleRefreshQuota = async () => {
+  refreshing.value = true
+  try {
+    const res = await checkAndResetApiQuota()
+    
+    if (res.data.reset) {
+      // 配额已重置
+      ElMessage.success({
+        message: '✅ 配额已重置！',
+        duration: 2000
+      })
+      
+      // 更新 store 中的配额信息
+      userStore.setApiUsed(res.data.apiUsed)
+      userStore.setApiQuota(res.data.apiQuota)
+    } else {
+      // 配额无需重置
+      const nextResetTime = new Date(res.data.nextResetTime)
+      const now = new Date()
+      const hoursLeft = Math.ceil((nextResetTime - now) / (1000 * 60 * 60))
+      
+      ElMessage.info({
+        message: `📊 配额正常，剩余 ${res.data.remaining}/${res.data.apiQuota}，${hoursLeft}小时后重置`,
+        duration: 3000
+      })
+    }
+  } catch (error) {
+    console.error('刷新配额失败:', error)
+    ElMessage.error('刷新配额失败，请稍后重试')
+  } finally {
+    refreshing.value = false
   }
 }
 </script>
