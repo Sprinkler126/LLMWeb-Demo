@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -76,7 +77,11 @@ public class ExportServiceImpl implements ExportService {
         // 设置响应头
         setCsvResponseHeader(response, "session_" + sessionId + ".csv");
 
-        try (PrintWriter writer = response.getWriter()) {
+        try (OutputStream out = response.getOutputStream();
+             PrintWriter writer = new PrintWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8))) {
+            // 写入UTF-8 BOM，确保Excel能正确识别编码
+            out.write(new byte[]{(byte) 0xEF, (byte) 0xBB, (byte) 0xBF});
+            
             // 写入CSV头
             writer.println("ID,Session ID,User ID,Role,Content,Tokens Used,Response Time,Compliance Status,Created Time");
 
@@ -183,7 +188,11 @@ public class ExportServiceImpl implements ExportService {
 
             case "CSV":
                 setCsvResponseHeader(response, fileName + ".csv");
-                try (PrintWriter writer = response.getWriter()) {
+                try (OutputStream out = response.getOutputStream();
+                     PrintWriter writer = new PrintWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8))) {
+                    // 写入UTF-8 BOM，确保Excel能正确识别编码
+                    out.write(new byte[]{(byte) 0xEF, (byte) 0xBB, (byte) 0xBF});
+                    
                     writer.println("ID,Session ID,User ID,Role,Content,Tokens Used,Response Time,Compliance Status,Created Time");
                     for (ChatMessage message : messages) {
                         writer.printf("%d,%d,%d,%s,\"%s\",%s,%s,%s,%s%n",

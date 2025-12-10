@@ -81,4 +81,14 @@ public class UserProfileController {
         Object usage = userProfileService.getApiUsage(userId);
         return Result.success(usage);
     }
+
+    /**
+     * 检查并重置API配额
+     */
+    @PostMapping("/check-quota")
+    public Result<String> checkAndResetApiQuota(HttpServletRequest request) {
+        Long userId = (Long) request.getAttribute("userId");
+        userProfileService.checkAndResetApiQuota(userId);
+        return Result.success("配额检查完成");
+    }
 }

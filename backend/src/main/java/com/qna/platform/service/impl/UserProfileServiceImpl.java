@@ -14,6 +14,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,6 +42,8 @@ public class UserProfileServiceImpl implements UserProfileService {
         
         // 获取用户角色
         SysRole role = roleMapper.selectByUserId(userId);
+        // 检查是否需要重置API配额
+        checkAndResetApiQuota(user);
         
         return UserProfileDTO.builder()
                 .userId(user.getId())
@@ -127,5 +132,24 @@ public class UserProfileServiceImpl implements UserProfileService {
             (double) user.getApiUsed() / user.getApiQuota() * 100 : 0);
         
         return usage;
+    }
+
+    @Override
+    public void checkAndResetApiQuota(Long userId) {
+        SysUser user = userMapper.selectById(userId);
+        checkAndResetApiQuota(user);
+    }
+
+
+    private void checkAndResetApiQuota(SysUser user) {
+        if (user.getApiUsed() != null && user.getApiUsed() > 0
+                && user.getQuotaResetTime() != null
+                && LocalDateTime.now().isAfter(user.getQuotaResetTime())) {
+
+            user.setApiUsed(0);
+            // 将重置时间设置为今天的24:00（即明天的00:00）
+            user.setQuotaResetTime(LocalDateTime.of(LocalDate.now().plusDays(1), LocalTime.MIDNIGHT));
+            userMapper.updateById(user);
+        }
     }
 }

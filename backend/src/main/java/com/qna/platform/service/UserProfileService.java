@@ -42,4 +42,11 @@ public interface UserProfileService {
      * @return API使用统计
      */
     Object getApiUsage(Long userId);
+
+    /**
+     * 检查并重置用户API配额
+     *
+     * @param userId 用户ID
+     */
+    void checkAndResetApiQuota(Long userId);
 }

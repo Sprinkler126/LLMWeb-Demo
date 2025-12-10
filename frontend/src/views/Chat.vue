@@ -37,62 +37,6 @@
       <el-col :span="18">
         <el-card class="chat-card">
           <div class="chat-content-wrapper">
-            <!-- API和Bot选择 -->
-            <div class="api-selector" v-if="!currentSessionId">
-              <div class="selector-row">
-                <el-select
-                  v-model="selectedApiId"
-                  placeholder="请选择AI模型"
-                  size="large"
-                  style="width: 300px"
-                >
-                  <el-option
-                    v-for="config in apiConfigs"
-                    :key="config.id"
-                    :label="config.configName"
-                    :value="config.id"
-                  >
-                    <span>{{ config.configName }}</span>
-                    <span style="color: #8492a6; font-size: 12px; margin-left: 10px">
-                      {{ config.provider }}
-                    </span>
-                  </el-option>
-                </el-select>
-              </div>
-              
-              <div class="selector-row" style="margin-top: 15px">
-                <el-select
-                  v-model="selectedBotId"
-                  placeholder="选择机器人角色（可选）"
-                  size="large"
-                  clearable
-                  style="width: 300px"
-                >
-                  <el-option
-                    v-for="bot in botTemplates"
-                    :key="bot.id"
-                    :label="bot.name"
-                    :value="bot.id"
-                  >
-                    <div style="display: flex; flex-direction: column">
-                      <span style="font-weight: 500">{{ bot.name }}</span>
-                      <span style="color: #8492a6; font-size: 12px">
-                        {{ bot.description }}
-                      </span>
-                    </div>
-                  </el-option>
-                </el-select>
-                <el-tooltip
-                  content="选择机器人角色可以让AI以特定的身份和风格回答问题"
-                  placement="top"
-                >
-                  <el-icon style="margin-left: 8px; color: #909399; cursor: help">
-                    <QuestionFilled />
-                  </el-icon>
-                </el-tooltip>
-              </div>
-            </div>
-
             <!-- 消息列表 -->
             <div class="message-list" ref="messageListRef">
               <div v-if="messages.length === 0" class="empty-chat">
@@ -161,6 +105,59 @@
 
           <!-- 输入框 - 固定在底部 -->
           <div class="input-area-fixed">
+            <!-- API和Bot选择 -->
+            <div class="api-selector-inline" v-if="!currentSessionId" style="margin-bottom: 15px;">
+              <el-select
+                v-model="selectedApiId"
+                placeholder="请选择AI模型"
+                size="small"
+                style="width: 200px; margin-right: 10px;"
+              >
+                <el-option
+                  v-for="config in apiConfigs"
+                  :key="config.id"
+                  :label="config.configName"
+                  :value="config.id"
+                >
+                  <span>{{ config.configName }}</span>
+                  <span style="color: #8492a6; font-size: 12px; margin-left: 10px">
+                    {{ config.provider }}
+                  </span>
+                </el-option>
+              </el-select>
+              
+              <el-select
+                v-model="selectedBotId"
+                placeholder="选择机器人角色（可选）"
+                size="small"
+                clearable
+                style="width: 200px;"
+              >
+                <el-option
+                  v-for="bot in botTemplates"
+                  :key="bot.id"
+                  :label="bot.name"
+                  :value="bot.id"
+                >
+                  <div style="display: flex; flex-direction: column">
+                    <span style="font-weight: 500">{{ bot.name }}</span>
+                    <span style="color: #8492a6; font-size: 12px">
+                      {{ bot.description }}
+                    </span>
+                  </div>
+                </el-option>
+              </el-select>
+              
+              <el-tooltip
+                content="选择机器人角色可以让AI以特定的身份和风格回答问题"
+                placement="top"
+              >
+                <el-icon style="margin-left: 8px; color: #909399; cursor: help">
+                  <QuestionFilled />
+                </el-icon>
+              </el-tooltip>
+            </div>
+            
             <el-input
               v-model="inputMessage"
               type="textarea"

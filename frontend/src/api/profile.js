@@ -41,3 +41,13 @@ export function getApiUsage() {
     method: 'get'
   })
 }
+
+/**
+ * 检查并重置API配额
+ */
+export function checkAndResetApiQuota() {
+    return request({
+        url: '/user/profile/check-quota',
+        method: 'post'
+    })
+}
