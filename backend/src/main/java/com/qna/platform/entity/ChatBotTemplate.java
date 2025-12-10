@@ -41,7 +41,7 @@ public class ChatBotTemplate {
     private LocalDateTime createdTime;
     
     /**
-     * 状态：1-启用，0-禁用
+     * 状态：0-停用，1-公开（用户可见），2-内部（系统流程专用）
      */
     private Integer status;
 }

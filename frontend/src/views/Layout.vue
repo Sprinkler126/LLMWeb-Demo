@@ -59,6 +59,11 @@
           <span>API配置</span>
         </el-menu-item>
 
+        <el-menu-item index="/bot-template" v-if="userStore.isAdmin">
+          <el-icon><ChatDotRound /></el-icon>
+          <span>Bot模板管理</span>
+        </el-menu-item>
+
         <el-menu-item index="/system-config" v-if="userStore.role === 'SUPER_ADMIN'">
           <el-icon><Tools /></el-icon>
           <span>系统配置</span>
@@ -105,7 +110,7 @@
 import { computed, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessageBox, ElMessage } from 'element-plus'
-import { Key, FolderOpened, DataAnalysis, Tools } from '@element-plus/icons-vue'
+import { Key, FolderOpened, DataAnalysis, Tools, ChatDotRound } from '@element-plus/icons-vue'
 import { useUserStore } from '@/store/user'
 
 const router = useRouter()

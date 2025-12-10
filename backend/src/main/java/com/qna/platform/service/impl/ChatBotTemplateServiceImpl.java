@@ -26,9 +26,18 @@ public class ChatBotTemplateServiceImpl extends ServiceImpl<ChatBotTemplateMappe
 
     @Override
     public List<ChatBotTemplate> getAllEnabledTemplates() {
+        // 只返回公开的模板（status=1），用于普通用户聊天界面
         LambdaQueryWrapper<ChatBotTemplate> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(ChatBotTemplate::getStatus, 1)
                 .orderByDesc(ChatBotTemplate::getCreatedTime);
+        return chatBotTemplateMapper.selectList(wrapper);
+    }
+
+    @Override
+    public List<ChatBotTemplate> getAllTemplates() {
+        // 返回所有状态的模板，用于管理员管理界面
+        LambdaQueryWrapper<ChatBotTemplate> wrapper = new LambdaQueryWrapper<>();
+        wrapper.orderByDesc(ChatBotTemplate::getCreatedTime);
         return chatBotTemplateMapper.selectList(wrapper);
     }
 

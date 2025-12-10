@@ -80,6 +80,12 @@ const routes = [
         name: 'SystemConfig',
         component: () => import('@/views/SystemConfig.vue'),
         meta: { title: '系统配置', requiresAdmin: true }
+      },
+      {
+        path: 'bot-template',
+        name: 'BotTemplate',
+        component: () => import('@/views/BotTemplateManagement.vue'),
+        meta: { title: 'Bot模板管理', requiresAdmin: true }
       }
     ]
   }

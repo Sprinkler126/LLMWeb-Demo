@@ -11,11 +11,18 @@ import java.util.List;
 public interface ChatBotTemplateService {
 
     /**
-     * 获取所有启用的机器人模板
+     * 获取所有公开的机器人模板（status=1，用户可见）
      *
-     * @return 启用的机器人模板列表
+     * @return 公开的机器人模板列表
      */
     List<ChatBotTemplate> getAllEnabledTemplates();
+
+    /**
+     * 获取所有机器人模板（管理员使用，包含所有状态）
+     *
+     * @return 所有机器人模板列表
+     */
+    List<ChatBotTemplate> getAllTemplates();
 
     /**
      * 创建机器人模板

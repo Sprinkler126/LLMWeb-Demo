@@ -24,10 +24,17 @@ public class ChatBotTemplateController {
         this.chatBotTemplateService = chatBotTemplateService;
     }
 
-    // 获取所有启用的机器人模板
+    // 获取所有公开的机器人模板（用户聊天界面）
     @GetMapping("/list")
     public Result<List<ChatBotTemplate>> listTemplates() {
         List<ChatBotTemplate> templates = chatBotTemplateService.getAllEnabledTemplates();
+        return Result.success(templates);
+    }
+
+    // 管理员获取所有模板（包含所有状态：停用、公开、内部）
+    @GetMapping("/admin/all")
+    public Result<List<ChatBotTemplate>> listAllTemplates() {
+        List<ChatBotTemplate> templates = chatBotTemplateService.getAllTemplates();
         return Result.success(templates);
     }
 
