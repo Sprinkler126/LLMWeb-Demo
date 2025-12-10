@@ -37,26 +37,60 @@
       <el-col :span="18">
         <el-card class="chat-card">
           <div class="chat-content-wrapper">
-            <!-- API选择 -->
+            <!-- API和Bot选择 -->
             <div class="api-selector" v-if="!currentSessionId">
-              <el-select
-                v-model="selectedApiId"
-                placeholder="请选择AI模型"
-                size="large"
-                style="width: 300px"
-              >
-                <el-option
-                  v-for="config in apiConfigs"
-                  :key="config.id"
-                  :label="config.configName"
-                  :value="config.id"
+              <div class="selector-row">
+                <el-select
+                  v-model="selectedApiId"
+                  placeholder="请选择AI模型"
+                  size="large"
+                  style="width: 300px"
                 >
-                  <span>{{ config.configName }}</span>
-                  <span style="color: #8492a6; font-size: 12px; margin-left: 10px">
-                    {{ config.provider }}
-                  </span>
-                </el-option>
-              </el-select>
+                  <el-option
+                    v-for="config in apiConfigs"
+                    :key="config.id"
+                    :label="config.configName"
+                    :value="config.id"
+                  >
+                    <span>{{ config.configName }}</span>
+                    <span style="color: #8492a6; font-size: 12px; margin-left: 10px">
+                      {{ config.provider }}
+                    </span>
+                  </el-option>
+                </el-select>
+              </div>
+              
+              <div class="selector-row" style="margin-top: 15px">
+                <el-select
+                  v-model="selectedBotId"
+                  placeholder="选择机器人角色（可选）"
+                  size="large"
+                  clearable
+                  style="width: 300px"
+                >
+                  <el-option
+                    v-for="bot in botTemplates"
+                    :key="bot.id"
+                    :label="bot.name"
+                    :value="bot.id"
+                  >
+                    <div style="display: flex; flex-direction: column">
+                      <span style="font-weight: 500">{{ bot.name }}</span>
+                      <span style="color: #8492a6; font-size: 12px">
+                        {{ bot.description }}
+                      </span>
+                    </div>
+                  </el-option>
+                </el-select>
+                <el-tooltip
+                  content="选择机器人角色可以让AI以特定的身份和风格回答问题"
+                  placement="top"
+                >
+                  <el-icon style="margin-left: 8px; color: #909399; cursor: help">
+                    <QuestionFilled />
+                  </el-icon>
+                </el-tooltip>
+              </div>
             </div>
 
             <!-- 消息列表 -->
@@ -156,8 +190,10 @@
 <script setup>
 import { ref, onMounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Plus, Delete, Loading, Promotion, QuestionFilled } from '@element-plus/icons-vue'
 import { getUserSessions, getSessionHistory, sendMessage as sendMessageApi, deleteSession } from '@/api/chat'
 import { getEnabledConfigs } from '@/api/apiConfig'
+import { getEnabledTemplates } from '@/api/botTemplate'
 import { useUserStore } from '@/store/user'
 import { marked } from 'marked'
 import hljs from 'highlight.js'
@@ -186,6 +222,8 @@ const currentSessionId = ref(null)
 const messages = ref([])
 const apiConfigs = ref([])
 const selectedApiId = ref(null)
+const botTemplates = ref([])
+const selectedBotId = ref(null)
 const inputMessage = ref('')
 const loading = ref(false)
 const messageListRef = ref(null)
@@ -193,6 +231,7 @@ const messageListRef = ref(null)
 onMounted(() => {
   loadSessions()
   loadApiConfigs()
+  loadBotTemplates()
 })
 
 const loadSessions = async () => {
@@ -216,6 +255,15 @@ const loadApiConfigs = async () => {
   }
 }
 
+const loadBotTemplates = async () => {
+  try {
+    const res = await getEnabledTemplates()
+    botTemplates.value = res.data
+  } catch (error) {
+    console.error('加载机器人模板失败:', error)
+  }
+}
+
 const selectSession = async (sessionId) => {
   currentSessionId.value = sessionId
   try {
@@ -232,6 +280,7 @@ const createNewSession = () => {
   currentSessionId.value = null
   messages.value = []
   inputMessage.value = ''
+  selectedBotId.value = null
 }
 
 const sendMessage = async () => {
@@ -253,7 +302,8 @@ const sendMessage = async () => {
       sessionId: currentSessionId.value,
       apiConfigId: selectedApiId.value,
       message: userMessage,
-      sessionTitle: userMessage.substring(0, 30)
+      sessionTitle: userMessage.substring(0, 30),
+      botTemplateId: selectedBotId.value
     })
 
     // 更新当前会话ID
@@ -415,6 +465,12 @@ const formatTime = (time) => {
   padding: 20px;
   text-align: center;
   flex-shrink: 0;
+}
+
+.selector-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .message-list {
