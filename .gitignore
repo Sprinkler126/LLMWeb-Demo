@@ -21,6 +21,11 @@ python-service/services/__pycache__
 python-service/.Python
 python-service/venv/
 python-service/env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
 
 # IDE
 .idea/
