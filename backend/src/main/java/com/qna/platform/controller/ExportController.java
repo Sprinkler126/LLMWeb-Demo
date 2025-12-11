@@ -123,6 +123,7 @@ public class ExportController {
      * 用于搜索和选择
      */
     @GetMapping("/admin/user/sessions")
+    @com.qna.platform.annotation.RequireRole({"ADMIN", "SUPER_ADMIN"})
     public Result<?> getUserSessions(
             @RequestParam(required = false) Long userId,
             @RequestParam(required = false) String username,

@@ -9,23 +9,29 @@
       </template>
 
       <!-- 用户搜索 -->
-      <!-- 用户搜索 -->
       <el-form :model="searchForm" inline class="search-form">
-        <el-form-item label="用户ID">
+        <el-form-item label="用户ID或用户名">
           <el-input
-              v-model="searchForm.userId"
-              placeholder="请输入用户ID"
-              clearable
-              @keyup.enter="handleSearchUser"
-          />
-        </el-form-item>
-        <el-form-item label="用户名">
-          <el-input
-              v-model="searchForm.username"
-              placeholder="请输入用户名"
-              clearable
-              @keyup.enter="handleSearchUser"
-          />
+            v-model="searchForm.searchInput"
+            placeholder="请输入用户ID或用户名"
+            clearable
+            @keyup.enter="handleSearchUser"
+            style="width: 300px"
+          >
+            <template #prepend>
+              <el-icon><User /></el-icon>
+            </template>
+          </el-input>
+          <el-tooltip 
+            content="支持输入数字ID或用户名进行搜索" 
+            placement="top"
+          >
+            <el-icon 
+              style="margin-left: 8px; color: #909399; cursor: help"
+            >
+              <QuestionFilled />
+            </el-icon>
+          </el-tooltip>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleSearchUser" :loading="loading">
@@ -97,6 +103,7 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
+import { User, QuestionFilled } from '@element-plus/icons-vue'
 import { getUserSessions, adminExportSessionJson } from '@/api/adminExport'
 import { useUserStore } from '@/store/user'
 
@@ -107,29 +114,45 @@ const searched = ref(false)
 const exportingSessionId = ref(null)
 
 const searchForm = reactive({
-  userId: '',
-  username: ''
+  searchInput: ''  // 统一的搜索输入框
 })
 
 const userInfo = ref(null)
 const sessions = ref([])
 
+// 判断输入是否为纯数字
+const isNumeric = (str) => {
+  return /^\d+$/.test(str)
+}
+
 // 搜索用户会话
 const handleSearchUser = async () => {
-  if (!searchForm.userId && !searchForm.username) {
+  if (!searchForm.searchInput || !searchForm.searchInput.trim()) {
     ElMessage.warning('请输入用户ID或用户名')
     return
   }
 
+  const input = searchForm.searchInput.trim()
   loading.value = true
   searched.value = true
 
   try {
-    // 根据是否有userId或username调用不同参数的API
-    const { data } = await getUserSessions(
-        searchForm.userId ? parseInt(searchForm.userId) : undefined,
-        searchForm.username || undefined
-    )
+    let userId = undefined
+    let username = undefined
+    
+    // 自动判断输入类型
+    if (isNumeric(input)) {
+      // 纯数字，按 ID 搜索
+      userId = parseInt(input)
+      console.log('按用户ID搜索:', userId)
+    } else {
+      // 包含非数字字符，按用户名搜索
+      username = input
+      console.log('按用户名搜索:', username)
+    }
+    
+    // 调用 API
+    const { data } = await getUserSessions(userId, username)
 
     userInfo.value = {
       targetUserId: data.targetUserId,

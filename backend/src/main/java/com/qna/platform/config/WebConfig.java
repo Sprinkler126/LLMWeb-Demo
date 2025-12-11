@@ -41,7 +41,8 @@ public class WebConfig implements WebMvcConfigurer {
         System.out.println("=================================================");
         System.out.println("🔧 配置JWT拦截器 - 排除路径：");
         System.out.println("   - /auth/**");
-        System.out.println("   - /export/**");
+        System.out.println("   - /export/session/**");
+        System.out.println("   - /export/all/**");
         System.out.println("   - /error");
         System.out.println("   - /swagger-ui/**");
         System.out.println("   - /v3/api-docs/**");
@@ -50,8 +51,10 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addInterceptor(jwtInterceptor)
                 .addPathPatterns("/**")
                 .excludePathPatterns(
-                        "/auth/**",          // 认证接口（登录、注册）
-                        "/export/**",        // 导出接口（通过 URL token 验证）
+                        "/auth/**",              // 认证接口（登录、注册）
+                        "/export/session/**",    // 文件下载接口（通过 URL token 验证）
+                        "/export/all/**",        // 批量导出接口（通过 URL token 验证）
+                        "/export/test",          // 测试接口
                         "/error",
                         "/swagger-ui/**",
                         "/v3/api-docs/**"
