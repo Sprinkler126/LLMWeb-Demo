@@ -17,7 +17,7 @@ frontend/yarn-error.log*
 
 # Python
 python-service/__pycache__/
-compliance-service/*.pyc
+python-service/services/__pycache__
 python-service/.Python
 python-service/venv/
 python-service/env/
