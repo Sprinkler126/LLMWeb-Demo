@@ -279,8 +279,16 @@ public class ChatServiceImpl implements ChatService {
             // 调用Python合规检测服务
             cn.hutool.json.JSONObject result = complianceClient.checkContent(message.getContent());
             
+            // 如果检测服务返回 null，说明服务不可用，保持 UNCHECKED 状态
+            if (result == null) {
+                org.slf4j.LoggerFactory.getLogger(getClass())
+                        .warn("合规检测服务不可用: messageId={}, 保持未检测状态", message.getId());
+                // 不更新数据库，保持原有的 UNCHECKED 状态
+                return;
+            }
+            
             // 更新消息的合规状态
-            String complianceResult = result.getStr("result", "PASS");
+            String complianceResult = result.getStr("result", "UNCHECKED");
             message.setComplianceStatus(complianceResult);
             message.setComplianceResult(result.toString());
             
@@ -288,9 +296,10 @@ public class ChatServiceImpl implements ChatService {
             messageMapper.updateById(message);
             
         } catch (Exception e) {
-            // 检测失败时，保持未检测状态
+            // 检测失败时，保持未检测状态，不更新数据库
             org.slf4j.LoggerFactory.getLogger(getClass())
-                    .error("合规检测失败: messageId={}, error={}", message.getId(), e.getMessage());
+                    .error("合规检测失败: messageId={}, error={}, 保持未检测状态", 
+                           message.getId(), e.getMessage());
         }
     }
 }

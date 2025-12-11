@@ -47,7 +47,7 @@ public class ComplianceClient {
      * 调用合规检测服务
      * 
      * @param content 待检测内容
-     * @return 检测结果
+     * @return 检测结果，如果服务不可用则返回 null
      */
     public JSONObject checkContent(String content) {
         try {
@@ -63,7 +63,8 @@ public class ComplianceClient {
             try (Response response = getClient().newCall(request).execute()) {
                 if (!response.isSuccessful()) {
                     log.error("合规检测失败: HTTP {}", response.code());
-                    return getDefaultPassResult();
+                    // 返回 null 表示检测服务不可用
+                    return null;
                 }
                 
                 String responseBody = response.body().string();
@@ -76,21 +77,24 @@ public class ComplianceClient {
             }
         } catch (IOException e) {
             log.error("合规检测异常: {}", e.getMessage());
-            // 检测失败时，返回默认通过结果
-            return getDefaultPassResult();
+            // 检测失败时，返回 null 表示服务不可用
+            return null;
         }
     }
     
     /**
-     * 获取默认通过结果（检测服务不可用时使用）
+     * 获取检测服务不可用时的结果（用于前端显示）
+     * 
+     * @deprecated 不再使用默认通过结果，改为返回 null 并保持 UNCHECKED 状态
      */
+    @Deprecated
     private JSONObject getDefaultPassResult() {
         JSONObject result = new JSONObject();
-        result.set("result", "PASS");
-        result.set("risk_level", "LOW");
+        result.set("result", "UNCHECKED");
+        result.set("risk_level", "UNKNOWN");
         result.set("risk_categories", "");
-        result.set("confidence_score", 0.50);
-        result.set("detail", "检测服务不可用，默认通过");
+        result.set("confidence_score", 0.0);
+        result.set("detail", "检测服务不可用");
         return result;
     }
     
