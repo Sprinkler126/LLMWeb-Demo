@@ -16,11 +16,11 @@ frontend/yarn-debug.log*
 frontend/yarn-error.log*
 
 # Python
-compliance-service/__pycache__/
+python-service/__pycache__/
 compliance-service/*.pyc
-compliance-service/.Python
-compliance-service/venv/
-compliance-service/env/
+python-service/.Python
+python-service/venv/
+python-service/env/
 
 # IDE
 .idea/

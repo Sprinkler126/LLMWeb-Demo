@@ -94,17 +94,5 @@ public class ComplianceClient {
         return result;
     }
     
-    /**
-     * 批量检测内容
-     * 
-     * @param contents 待检测内容列表
-     * @return 检测结果列表
-     */
-    public java.util.List<JSONObject> checkContentBatch(java.util.List<String> contents) {
-        java.util.List<JSONObject> results = new java.util.ArrayList<>();
-        for (String content : contents) {
-            results.add(checkContent(content));
-        }
-        return results;
-    }
+
 }

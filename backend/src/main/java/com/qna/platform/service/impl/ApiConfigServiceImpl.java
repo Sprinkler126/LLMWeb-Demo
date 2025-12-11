@@ -19,6 +19,7 @@ import java.util.Map;
  *
  * @author QnA Platform
  */
+
 @Service
 public class ApiConfigServiceImpl implements ApiConfigService {
 

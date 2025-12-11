@@ -61,7 +61,7 @@ services:
   # Python合规检测服务（可选）
   compliance-service:
     build:
-      context: ./compliance-service
+      context: python-service
       dockerfile: Dockerfile
     container_name: qna-compliance
     ports:

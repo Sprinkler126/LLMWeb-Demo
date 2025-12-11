@@ -8,6 +8,7 @@ import com.qna.platform.enums.ComplianceStatus;
 import com.qna.platform.mapper.*;
 import com.qna.platform.service.ChatService;
 import com.qna.platform.util.AiApiClient;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

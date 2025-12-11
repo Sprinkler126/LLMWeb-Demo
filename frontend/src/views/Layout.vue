@@ -204,13 +204,13 @@ const handleRefreshQuota = async () => {
       const hoursLeft = Math.ceil((nextResetTime - now) / (1000 * 60 * 60))
       
       ElMessage.info({
-        message: `📊 配额正常，剩余 ${res.data.remaining}/${res.data.apiQuota}，${hoursLeft}小时后重置`,
+        message: `📊 配额正常😋，剩余 ${res.data.remaining}/${res.data.apiQuota}，${hoursLeft}小时后重置`,
         duration: 3000
       })
     }
   } catch (error) {
-    console.error('刷新配额失败:', error)
-    ElMessage.error('刷新配额失败，请稍后重试')
+    console.error('⚠️刷新配额失败:', error)
+    ElMessage.error('⚠️刷新配额失败，请稍后重试')
   } finally {
     refreshing.value = false
   }
