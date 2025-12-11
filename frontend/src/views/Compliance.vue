@@ -164,7 +164,7 @@ const handleCheckService = async () => {
   try {
     await checkServiceConfig()
     if (serviceConfigured.value) {
-      ElMessage.success('服务配置已加载')
+      ElMessage.success('服务配置接口已加载')
     } else {
       ElMessage.warning('服务未配置，请先在系统配置中配置Python服务')
     }

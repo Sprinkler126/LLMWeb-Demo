@@ -9,13 +9,22 @@
       </template>
 
       <!-- 用户搜索 -->
+      <!-- 用户搜索 -->
       <el-form :model="searchForm" inline class="search-form">
         <el-form-item label="用户ID">
-          <el-input 
-            v-model="searchForm.userId" 
-            placeholder="请输入用户ID"
-            clearable
-            @keyup.enter="handleSearchUser"
+          <el-input
+              v-model="searchForm.userId"
+              placeholder="请输入用户ID"
+              clearable
+              @keyup.enter="handleSearchUser"
+          />
+        </el-form-item>
+        <el-form-item label="用户名">
+          <el-input
+              v-model="searchForm.username"
+              placeholder="请输入用户名"
+              clearable
+              @keyup.enter="handleSearchUser"
           />
         </el-form-item>
         <el-form-item>
@@ -98,7 +107,8 @@ const searched = ref(false)
 const exportingSessionId = ref(null)
 
 const searchForm = reactive({
-  userId: ''
+  userId: '',
+  username: ''
 })
 
 const userInfo = ref(null)
@@ -106,23 +116,28 @@ const sessions = ref([])
 
 // 搜索用户会话
 const handleSearchUser = async () => {
-  if (!searchForm.userId) {
-    ElMessage.warning('请输入用户ID')
+  if (!searchForm.userId && !searchForm.username) {
+    ElMessage.warning('请输入用户ID或用户名')
     return
   }
 
   loading.value = true
   searched.value = true
-  
+
   try {
-    const { data } = await getUserSessions(searchForm.userId)
+    // 根据是否有userId或username调用不同参数的API
+    const { data } = await getUserSessions(
+        searchForm.userId ? parseInt(searchForm.userId) : undefined,
+        searchForm.username || undefined
+    )
+
     userInfo.value = {
       targetUserId: data.targetUserId,
       targetUsername: data.targetUsername,
       totalCount: data.totalCount
     }
     sessions.value = data.sessions || []
-    
+
     if (sessions.value.length === 0) {
       ElMessage.info('该用户暂无会话记录')
     } else {

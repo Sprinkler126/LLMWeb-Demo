@@ -23,6 +23,11 @@
           <span>对话</span>
         </el-menu-item>
 
+        <el-menu-item index="/bot-template" v-if="userStore.isAdmin">
+          <el-icon><ChatDotRound /></el-icon>
+          <span>Bot模板管理</span>
+        </el-menu-item>
+
         <el-menu-item index="/export">
           <el-icon><Download /></el-icon>
           <span>个人数据导出</span>
@@ -36,7 +41,7 @@
 
         <el-menu-item index="/compliance" v-if="userStore.hasCompliancePermission">
           <el-icon><DocumentChecked /></el-icon>
-          <span>合规检测</span>
+          <span>文本合规检测</span>
         </el-menu-item>
 
         <el-menu-item index="/compliance-test" v-if="userStore.hasCompliancePermission">
@@ -57,11 +62,6 @@
         <el-menu-item index="/api-config">
           <el-icon><Setting /></el-icon>
           <span>API配置</span>
-        </el-menu-item>
-
-        <el-menu-item index="/bot-template" v-if="userStore.isAdmin">
-          <el-icon><ChatDotRound /></el-icon>
-          <span>Bot模板管理</span>
         </el-menu-item>
 
         <el-menu-item index="/system-config" v-if="userStore.role === 'SUPER_ADMIN'">

@@ -63,4 +63,11 @@ public interface ExportService {
      * @return 会话列表
      */
     Object getUserSessionList(Long targetUserId, Long currentUserId);
+/**
+     * 获取指定用户ID
+     *
+     * @param username 用户名
+     * @return 用户ID
+     */
+    Long getUserIdByUsername(String username);
 }

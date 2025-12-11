@@ -4,6 +4,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.qna.platform.entity.ChatMessage;
 import com.qna.platform.entity.ChatSession;
+import com.qna.platform.entity.SysUser;
 import com.qna.platform.mapper.ChatMessageMapper;
 import com.qna.platform.mapper.ChatSessionMapper;
 import com.qna.platform.service.ExportService;
@@ -385,4 +386,10 @@ public class ExportServiceImpl implements ExportService {
         String roleCode = role.getRoleCode();
         return "SUPER_ADMIN".equals(roleCode) || "ADMIN".equals(roleCode);
     }
+
+    public Long getUserIdByUsername(String username) {
+        SysUser user = userMapper.selectByUsername(username);
+        return user != null ? user.getId() : null;
+    }
+
 }

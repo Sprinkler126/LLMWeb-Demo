@@ -3,12 +3,24 @@ import request from '@/utils/request'
 /**
  * 获取指定用户的会话列表
  */
-export function getUserSessions(targetUserId) {
-  return request({
-    url: `/export/admin/user/${targetUserId}/sessions`,
-    method: 'get'
-  })
+// 在 api/adminExport.js 中更新 getUserSessions 方法
+export function getUserSessions(userId, username) {
+    // 构造查询参数
+    const params = {}
+    if (userId) {
+        params.userId = userId
+    }
+    if (username) {
+        params.username = username
+    }
+
+    return request({
+        url: '/api/export/admin/user/sessions',
+        method: 'get',
+        params
+    })
 }
+
 
 /**
  * 管理员导出指定用户的会话（JSON）

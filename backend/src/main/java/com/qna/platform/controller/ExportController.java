@@ -118,7 +118,38 @@ public class ExportController {
         Object sessions = exportService.getUserSessionList(targetUserId, currentUserId);
         return Result.success(sessions);
     }
-    
+    /**
+     * 管理员导出指定用户(用户名或者ID)的所有会话列表
+     * 用于搜索和选择
+     */
+    @GetMapping("/admin/user/sessions")
+    public Result<?> getUserSessions(
+            @RequestParam(required = false) Long userId,
+            @RequestParam(required = false) String username,
+            HttpServletRequest request) {
+        Long currentUserId = (Long) request.getAttribute("userId");
+        if (currentUserId == null) {
+            return Result.error("未登录");
+        }
+
+        Long targetUserId = userId;
+        if (targetUserId == null && username != null) {
+            // 根据用户名查找用户ID
+            targetUserId = exportService.getUserIdByUsername(username);
+            if (targetUserId == null) {
+                return Result.error("用户不存在");
+            }
+        }
+
+        if (targetUserId == null) {
+            return Result.error("请提供用户ID或用户名");
+        }
+
+        Object sessions = exportService.getUserSessionList(targetUserId, currentUserId);
+        return Result.success(sessions);
+    }
+
+
     /**
      * 测试接口 - 验证拦截器是否跳过导出路径
      */
