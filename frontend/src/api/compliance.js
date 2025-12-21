@@ -64,6 +64,25 @@ export function triggerCheck(taskId) {
   })
 }
 
+/**
+ * 批量检测 - 文件上传
+ * @param {File} file - 上传的文件（JSON或CSV格式）
+ * @returns {Promise}
+ */
+export function batchCheckFromFile(file) {
+  const formData = new FormData()
+  formData.append('file', file)
+  
+  return request({
+    url: '/compliance/batch-check',
+    method: 'post',
+    data: formData,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}
+
 // ========== LLM合规检测API ==========
 
 /**

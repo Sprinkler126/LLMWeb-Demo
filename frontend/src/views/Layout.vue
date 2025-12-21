@@ -44,6 +44,11 @@
           <span>文本合规检测</span>
         </el-menu-item>
 
+        <el-menu-item index="/batch-compliance" v-if="userStore.hasCompliancePermission">
+          <el-icon><FolderOpened /></el-icon>
+          <span>批量合规检测</span>
+        </el-menu-item>
+
         <el-menu-item index="/compliance-test" v-if="userStore.hasCompliancePermission">
           <el-icon><DataAnalysis /></el-icon>
           <span>LLM合规审计</span>

@@ -34,6 +34,12 @@ const routes = [
         meta: { title: '合规检测(简单)', requiresPermission: true }
       },
       {
+        path: 'batch-compliance',
+        name: 'BatchCompliance',
+        component: () => import('@/views/BatchCompliance.vue'),
+        meta: { title: '批量合规检测', requiresPermission: true }
+      },
+      {
         path: 'compliance-test',
         name: 'ComplianceTest',
         component: () => import('@/views/ComplianceTest.vue'),

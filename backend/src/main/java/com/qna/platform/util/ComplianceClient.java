@@ -2,6 +2,8 @@ package com.qna.platform.util;
 
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.qna.platform.service.SystemConfigService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,23 +19,55 @@ import java.time.Duration;
  */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class ComplianceClient {
     
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
     
+    private final SystemConfigService systemConfigService;
+    
     @Value("${app.compliance.service-url:http://localhost:5000/api/compliance/check}")
-    private String checkUrl;
+    private String defaultCheckUrl;
     
     @Value("${app.compliance.timeout:30000}")
-    private int timeout;
+    private int defaultTimeout;
     
     private OkHttpClient client;
+    
+    /**
+     * 获取合规检测服务URL
+     */
+    private String getCheckUrl() {
+        try {
+            String pythonServiceUrl = systemConfigService.getConfigValue(
+                "python.service.url", "http://localhost:5000");
+            return pythonServiceUrl + "/api/compliance/check";
+        } catch (Exception e) {
+            log.warn("获取Python服务URL失败，使用默认配置: {}", defaultCheckUrl);
+            return defaultCheckUrl;
+        }
+    }
+    
+    /**
+     * 获取超时时间
+     */
+    private int getTimeout() {
+        try {
+            String timeoutStr = systemConfigService.getConfigValue(
+                "python.service.timeout", String.valueOf(defaultTimeout));
+            return Integer.parseInt(timeoutStr);
+        } catch (Exception e) {
+            log.warn("获取Python服务超时配置失败，使用默认值: {}ms", defaultTimeout);
+            return defaultTimeout;
+        }
+    }
     
     /**
      * 获取HTTP客户端
      */
     private OkHttpClient getClient() {
         if (client == null) {
+            int timeout = getTimeout();
             client = new OkHttpClient.Builder()
                     .connectTimeout(Duration.ofMillis(timeout))
                     .readTimeout(Duration.ofMillis(timeout))
@@ -51,12 +85,15 @@ public class ComplianceClient {
      */
     public JSONObject checkContent(String content) {
         try {
+            String url = getCheckUrl();
+            log.debug("调用合规检测服务: {}", url);
+            
             JSONObject requestBody = new JSONObject();
             requestBody.set("content", content);
             
             RequestBody body = RequestBody.create(requestBody.toString(), JSON);
             Request request = new Request.Builder()
-                    .url(checkUrl)
+                    .url(url)
                     .post(body)
                     .build();
             

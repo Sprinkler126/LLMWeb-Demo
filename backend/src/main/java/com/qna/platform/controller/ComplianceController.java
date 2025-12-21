@@ -3,12 +3,15 @@ package com.qna.platform.controller;
 import com.qna.platform.annotation.RequirePermission;
 import com.qna.platform.common.PageResult;
 import com.qna.platform.common.Result;
+import com.qna.platform.dto.BatchComplianceResult;
 import com.qna.platform.dto.ComplianceCheckDTO;
 import com.qna.platform.entity.ComplianceTask;
 import com.qna.platform.service.ComplianceService;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 
@@ -18,6 +21,7 @@ import java.util.Map;
  *
  * @author QnA Platform
  */
+@Slf4j
 @RestController
 @RequestMapping("/compliance")
 @RequirePermission("COMPLIANCE_CHECK")
@@ -102,6 +106,27 @@ public class ComplianceController {
             return Result.success("检测完成", result);
         } catch (Exception e) {
             return Result.error(e.getMessage());
+        }
+    }
+    
+    /**
+     * 批量检测 - 文件上传
+     * 支持JSON和CSV格式的导出文件
+     */
+    @PostMapping("/batch-check")
+    public Result<BatchComplianceResult> batchCheck(
+            @RequestParam("file") MultipartFile file,
+            HttpServletRequest request) {
+        try {
+            log.info("收到批量检测请求，文件名：{}", file.getOriginalFilename());
+            
+            Long userId = (Long) request.getAttribute("userId");
+            BatchComplianceResult result = complianceService.batchCheckFromFile(file, userId);
+            
+            return Result.success("批量检测完成", result);
+        } catch (Exception e) {
+            log.error("批量检测失败", e);
+            return Result.error("批量检测失败：" + e.getMessage());
         }
     }
 }

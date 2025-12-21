@@ -1,8 +1,10 @@
 package com.qna.platform.service;
 
 import com.qna.platform.common.PageResult;
+import com.qna.platform.dto.BatchComplianceResult;
 import com.qna.platform.dto.ComplianceCheckDTO;
 import com.qna.platform.entity.ComplianceTask;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 合规检测服务接口
@@ -54,4 +56,14 @@ public interface ComplianceService {
      * @return 检测结果
      */
     String checkSingleMessage(String content);
+    
+    /**
+     * 从文件批量检测合规性
+     * 支持JSON和CSV格式的导出文件
+     *
+     * @param file 上传的文件
+     * @param userId 用户ID
+     * @return 批量检测结果
+     */
+    BatchComplianceResult batchCheckFromFile(MultipartFile file, Long userId);
 }

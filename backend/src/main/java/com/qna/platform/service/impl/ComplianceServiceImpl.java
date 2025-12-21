@@ -1,26 +1,32 @@
 package com.qna.platform.service.impl;
 
+import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qna.platform.common.PageResult;
+import com.qna.platform.dto.BatchComplianceResult;
 import com.qna.platform.dto.ComplianceCheckDTO;
 import com.qna.platform.entity.*;
 import com.qna.platform.mapper.*;
 import com.qna.platform.service.ComplianceService;
+import com.qna.platform.util.ComplianceClient;
+import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 合规检测服务实现
@@ -28,6 +34,7 @@ import java.util.Map;
  *
  * @author QnA Platform
  */
+@Slf4j
 @Service
 public class ComplianceServiceImpl implements ComplianceService {
 
@@ -42,16 +49,22 @@ public class ComplianceServiceImpl implements ComplianceService {
     private final ChatMessageMapper messageMapper;
     private final SysUserMapper userMapper;
     private final OkHttpClient httpClient;
+    private final ComplianceClient complianceClient;
+    private final ObjectMapper objectMapper;
 
     private static final MediaType JSON_MEDIA_TYPE = MediaType.parse("application/json; charset=utf-8");
 
     public ComplianceServiceImpl(ComplianceTaskMapper taskMapper,
                                 ComplianceResultMapper resultMapper,
                                 ChatMessageMapper messageMapper,
+                                ComplianceClient complianceClient,
+                                ObjectMapper objectMapper,
                                 SysUserMapper userMapper) {
         this.taskMapper = taskMapper;
         this.resultMapper = resultMapper;
         this.messageMapper = messageMapper;
+        this.complianceClient = complianceClient;
+        this.objectMapper = objectMapper;
         this.userMapper = userMapper;
         this.httpClient = new OkHttpClient.Builder()
                 .connectTimeout(complianceTimeout, java.util.concurrent.TimeUnit.MILLISECONDS)
@@ -300,5 +313,207 @@ public class ComplianceServiceImpl implements ComplianceService {
         wrapper.last("LIMIT 1000");
 
         return messageMapper.selectList(wrapper);
+    }
+    
+    @Override
+    public BatchComplianceResult batchCheckFromFile(MultipartFile file, Long userId) {
+        try {
+            String filename = file.getOriginalFilename();
+            log.info("开始批量检测，文件名：{}", filename);
+            
+            List<ChatMessage> messages;
+            
+            // 根据文件类型解析
+            if (filename.endsWith(".json")) {
+                messages = parseJsonFile(file);
+            } else if (filename.endsWith(".csv")) {
+                messages = parseCsvFile(file);
+            } else {
+                throw new RuntimeException("不支持的文件格式，请上传JSON或CSV文件");
+            }
+            
+            if (messages.isEmpty()) {
+                throw new RuntimeException("文件中没有有效的消息数据");
+            }
+            
+            log.info("解析到 {} 条消息，开始批量检测", messages.size());
+            
+            // 批量检测
+            return performBatchCheck(messages);
+            
+        } catch (Exception e) {
+            log.error("批量检测失败", e);
+            throw new RuntimeException("批量检测失败：" + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * 解析JSON文件
+     */
+    private List<ChatMessage> parseJsonFile(MultipartFile file) throws IOException {
+        String content = new String(file.getBytes(), StandardCharsets.UTF_8);
+        JSONArray jsonArray = JSONUtil.parseArray(content);
+        
+        List<ChatMessage> messages = new ArrayList<>();
+        for (Object obj : jsonArray) {
+            JSONObject json = (JSONObject) obj;
+            ChatMessage message = new ChatMessage();
+            message.setId(json.getLong("id"));
+            message.setSessionId(json.getLong("sessionId"));
+            message.setUserId(json.getLong("userId"));
+            message.setRole(json.getStr("role"));
+            message.setContent(json.getStr("content"));
+            messages.add(message);
+        }
+        
+        return messages;
+    }
+    
+    /**
+     * 解析CSV文件
+     */
+    private List<ChatMessage> parseCsvFile(MultipartFile file) throws IOException {
+        List<ChatMessage> messages = new ArrayList<>();
+        
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
+            
+            // 跳过BOM和标题行
+            String line = reader.readLine();
+            if (line != null && line.startsWith("\uFEFF")) {
+                line = line.substring(1);
+            }
+            
+            // 读取数据行
+            while ((line = reader.readLine()) != null) {
+                String[] fields = parseCsvLine(line);
+                if (fields.length >= 5) {
+                    ChatMessage message = new ChatMessage();
+                    message.setId(Long.parseLong(fields[0]));
+                    message.setSessionId(Long.parseLong(fields[1]));
+                    message.setUserId(Long.parseLong(fields[2]));
+                    message.setRole(fields[3]);
+                    message.setContent(fields[4]);
+                    messages.add(message);
+                }
+            }
+        }
+        
+        return messages;
+    }
+    
+    /**
+     * 解析CSV行（处理引号内的逗号）
+     */
+    private String[] parseCsvLine(String line) {
+        List<String> fields = new ArrayList<>();
+        StringBuilder field = new StringBuilder();
+        boolean inQuotes = false;
+        
+        for (int i = 0; i < line.length(); i++) {
+            char c = line.charAt(i);
+            
+            if (c == '"') {
+                inQuotes = !inQuotes;
+            } else if (c == ',' && !inQuotes) {
+                fields.add(field.toString());
+                field = new StringBuilder();
+            } else {
+                field.append(c);
+            }
+        }
+        fields.add(field.toString());
+        
+        return fields.toArray(new String[0]);
+    }
+    
+    /**
+     * 执行批量检测
+     */
+    private BatchComplianceResult performBatchCheck(List<ChatMessage> messages) {
+        List<BatchComplianceResult.ComplianceItem> items = new ArrayList<>();
+        int passedCount = 0;
+        int failedCount = 0;
+        int uncheckedCount = 0;
+        
+        // 按会话分组，配对用户消息和AI响应
+        Map<Long, List<ChatMessage>> sessionMessages = new HashMap<>();
+        for (ChatMessage message : messages) {
+            sessionMessages.computeIfAbsent(message.getSessionId(), k -> new ArrayList<>()).add(message);
+        }
+        
+        int index = 1;
+        for (Map.Entry<Long, List<ChatMessage>> entry : sessionMessages.entrySet()) {
+            List<ChatMessage> sessionMsgs = entry.getValue();
+            
+            // 按时间排序
+            sessionMsgs.sort(Comparator.comparing(ChatMessage::getId));
+            
+            // 配对用户消息和AI响应
+            for (int i = 0; i < sessionMsgs.size(); i++) {
+                ChatMessage msg = sessionMsgs.get(i);
+                
+                if ("user".equals(msg.getRole())) {
+                    BatchComplianceResult.ComplianceItem item = new BatchComplianceResult.ComplianceItem();
+                    item.setIndex(index++);
+                    item.setSessionId(msg.getSessionId());
+                    item.setMessageId(msg.getId());
+                    item.setUserContent(msg.getContent());
+                    item.setTimestamp(System.currentTimeMillis());
+                    
+                    // 检测用户消息
+                    JSONObject userResult = complianceClient.checkContent(msg.getContent());
+                    if (userResult != null) {
+                        item.setUserResult(userResult.getStr("result"));
+                        item.setUserRiskLevel(userResult.getStr("risk_level"));
+                        item.setUserRiskCategories(userResult.getStr("risk_categories"));
+                    } else {
+                        item.setUserResult("UNCHECKED");
+                        item.setUserRiskLevel("UNKNOWN");
+                        uncheckedCount++;
+                    }
+                    
+                    // 查找对应的AI响应
+                    if (i + 1 < sessionMsgs.size() && "assistant".equals(sessionMsgs.get(i + 1).getRole())) {
+                        ChatMessage assistantMsg = sessionMsgs.get(i + 1);
+                        item.setAssistantContent(assistantMsg.getContent());
+                        
+                        // 检测AI响应
+                        JSONObject assistantResult = complianceClient.checkContent(assistantMsg.getContent());
+                        if (assistantResult != null) {
+                            item.setAssistantResult(assistantResult.getStr("result"));
+                            item.setAssistantRiskLevel(assistantResult.getStr("risk_level"));
+                            item.setAssistantRiskCategories(assistantResult.getStr("risk_categories"));
+                        } else {
+                            item.setAssistantResult("UNCHECKED");
+                            item.setAssistantRiskLevel("UNKNOWN");
+                            uncheckedCount++;
+                        }
+                        
+                        i++; // 跳过已处理的assistant消息
+                    }
+                    
+                    // 统计结果
+                    boolean hasFail = "FAIL".equals(item.getUserResult()) || "FAIL".equals(item.getAssistantResult());
+                    boolean hasPass = "PASS".equals(item.getUserResult()) || "PASS".equals(item.getAssistantResult());
+                    
+                    if (hasFail) {
+                        failedCount++;
+                    } else if (hasPass) {
+                        passedCount++;
+                    }
+                    
+                    items.add(item);
+                }
+            }
+        }
+        
+        return BatchComplianceResult.builder()
+                .items(items)
+                .total(items.size())
+                .passedCount(passedCount)
+                .failedCount(failedCount)
+                .uncheckedCount(uncheckedCount)
+                .build();
     }
 }
