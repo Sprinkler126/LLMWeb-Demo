@@ -43,6 +43,7 @@ public class WebConfig implements WebMvcConfigurer {
         System.out.println("   - /auth/**");
         System.out.println("   - /export/session/**");
         System.out.println("   - /export/all/**");
+        System.out.println("   - /training/progress");
         System.out.println("   - /error");
         System.out.println("   - /swagger-ui/**");
         System.out.println("   - /v3/api-docs/**");
@@ -55,6 +56,7 @@ public class WebConfig implements WebMvcConfigurer {
                         "/export/session/**",    // 文件下载接口（通过 URL token 验证）
                         "/export/all/**",        // 批量导出接口（通过 URL token 验证）
                         "/export/test",          // 测试接口
+                        "/training/progress",    // Python服务回调接口（内部调用）
                         "/error",
                         "/swagger-ui/**",
                         "/v3/api-docs/**"

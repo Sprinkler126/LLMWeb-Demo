@@ -17,6 +17,7 @@ load_dotenv()
 from routes.compliance import compliance_bp
 from routes.health import health_bp
 from routes.scaninfo import scaninfo_bp
+from routes.training import training_bp
 
 app = Flask(__name__)
 CORS(app)
@@ -28,6 +29,7 @@ logger = logging.getLogger(__name__)
 app.register_blueprint(compliance_bp, url_prefix='/api/compliance')
 app.register_blueprint(health_bp)
 app.register_blueprint(scaninfo_bp, url_prefix='/api')
+app.register_blueprint(training_bp)
 
 if __name__ == '__main__':
     # 获取配置
@@ -35,8 +37,9 @@ if __name__ == '__main__':
     current_config = config[config_name]
     
     print("=" * 60)
-    print("Python合规检测服务启动中...")
+    print("Python服务启动中...")
     print(f"合规检测接口地址: http://{current_config.HOST}:{current_config.PORT}/api/compliance/check")
     print(f"信息扫描接口地址: http://{current_config.HOST}:{current_config.PORT}/api/scaninfo")
+    print(f"模型训练接口地址: http://{current_config.HOST}:{current_config.PORT}/api/training")
     print("=" * 60)
     app.run(host=current_config.HOST, port=current_config.PORT, debug=current_config.DEBUG)

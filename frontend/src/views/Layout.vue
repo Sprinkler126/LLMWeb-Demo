@@ -68,6 +68,11 @@
           <el-icon><Tools /></el-icon>
           <span>系统配置</span>
         </el-menu-item>
+
+        <el-menu-item index="/model-training" v-if="userStore.isAdmin">
+          <el-icon><DataAnalysis /></el-icon>
+          <span>模型训练</span>
+        </el-menu-item>
       </el-menu>
     </el-aside>
 

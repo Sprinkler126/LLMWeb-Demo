@@ -86,6 +86,12 @@ const routes = [
         name: 'BotTemplate',
         component: () => import('@/views/BotTemplateManagement.vue'),
         meta: { title: 'Bot模板管理', requiresAdmin: true }
+      },
+      {
+        path: 'model-training',
+        name: 'ModelTraining',
+        component: () => import('@/views/ModelTraining.vue'),
+        meta: { title: '模型训练', requiresAdmin: true }
       }
     ]
   }
