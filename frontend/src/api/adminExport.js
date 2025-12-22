@@ -15,7 +15,7 @@ export function getUserSessions(userId, username) {
     }
 
     return request({
-        url: '/api/export/admin/user/sessions',
+        url: '/export/admin/user/sessions',
         method: 'get',
         params
     })

@@ -9,7 +9,7 @@
       </template>
 
       <!-- 用户搜索 -->
-      <el-form :model="searchForm" inline class="search-form">
+      <el-form :model="searchForm" inline class="search-form" @submit.prevent="handleSearchUser">
         <el-form-item label="用户ID或用户名">
           <el-input
             v-model="searchForm.searchInput"
@@ -61,18 +61,17 @@
         border
         stripe
       >
-        <el-table-column prop="id" label="会话ID" width="80" />
-        <el-table-column prop="title" label="会话标题" min-width="200">
+        <el-table-column prop="sessionTitle" label="会话标题" min-width="200">
           <template #default="{ row }">
-            <span>{{ row.title || '未命名会话' }}</span>
+            <span>{{ row.sessionTitle || '未命名会话' }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="createdTime" label="创建时间" width="180">
+        <el-table-column prop="createdTime" label="创建时间" width="200">
           <template #default="{ row }">
             {{ formatDate(row.createdTime) }}
           </template>
         </el-table-column>
-        <el-table-column prop="updatedTime" label="最后更新" width="180">
+        <el-table-column prop="updatedTime" label="最后更新" width="200">
           <template #default="{ row }">
             {{ formatDate(row.updatedTime) }}
           </template>
@@ -184,17 +183,17 @@ const handleExport = (sessionId) => {
   }
 
   exportingSessionId.value = sessionId
-  
+
   try {
-    const url = adminExportSessionJson(
-      sessionId, 
-      userInfo.value.targetUserId, 
-      userStore.token
-    )
-    
+    // 携带 token 到 URL
+    const token = userStore.token
+    // window.open 不会经过 Vite 代理，需要使用完整的后端 URL
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'
+    const url = `${baseUrl}/export/admin/session/${sessionId}/json?targetUserId=${userInfo.value.targetUserId}&token=${token}&targetUserId=${userInfo.value.targetUserId}`
+
     // 在新窗口打开下载链接
     window.open(url, '_blank')
-    
+
     ElMessage.success('导出请求已发送')
   } catch (error) {
     console.error('导出失败:', error)

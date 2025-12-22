@@ -358,13 +358,14 @@ public class ExportServiceImpl implements ExportService {
         if (targetUser == null) {
             throw new RuntimeException("目标用户不存在");
         }
-        
+        System.out.println("🔍正在查找用户 " + targetUser.getUsername() + " 的历史会话");
+
         // 查询该用户的所有会话
         LambdaQueryWrapper<ChatSession> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(ChatSession::getUserId, targetUserId)
                 .orderByDesc(ChatSession::getCreatedTime);
         List<ChatSession> sessions = sessionMapper.selectList(wrapper);
-        
+
         // 构建返回数据
         java.util.Map<String, Object> result = new java.util.HashMap<>();
         result.put("targetUserId", targetUserId);

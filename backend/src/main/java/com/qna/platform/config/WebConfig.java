@@ -42,6 +42,7 @@ public class WebConfig implements WebMvcConfigurer {
         System.out.println("🔧 配置JWT拦截器 - 排除路径：");
         System.out.println("   - /auth/**");
         System.out.println("   - /export/session/**");
+        System.out.println("   - /export/admin/session/**");
         System.out.println("   - /export/all/**");
         System.out.println("   - /training/progress");
         System.out.println("   - /error");
@@ -54,6 +55,7 @@ public class WebConfig implements WebMvcConfigurer {
                 .excludePathPatterns(
                         "/auth/**",              // 认证接口（登录、注册）
                         "/export/session/**",    // 文件下载接口（通过 URL token 验证）
+                        "/export/admin/session/**",    // 文件下载接口（通过 URL token 验证）
                         "/export/all/**",        // 批量导出接口（通过 URL token 验证）
                         "/export/test",          // 测试接口
                         "/training/progress",    // Python服务回调接口（内部调用）

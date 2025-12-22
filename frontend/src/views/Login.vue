@@ -108,13 +108,24 @@ const rules = {
 const registerRules = {
   username: [
     { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 3, max: 20, message: '用户名长度3-20个字符', trigger: 'blur' }
+    { min: 3, max: 20, message: '用户名长度3-20个字符', trigger: 'blur' },
+    {
+      validator: (rule, value, callback) => {
+        if (/^\d+$/.test(value)) {
+          callback(new Error('用户名不能为纯数字'))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'blur'
+    }
   ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
     { min: 6, max: 20, message: '密码长度6-20个字符', trigger: 'blur' }
   ]
 }
+
 
 const handleLogin = async () => {
   await loginFormRef.value.validate(async (valid) => {
