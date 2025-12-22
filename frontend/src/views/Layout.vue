@@ -39,14 +39,9 @@
         </el-menu-item>
 
 
-        <el-menu-item index="/compliance" v-if="userStore.hasCompliancePermission">
+        <el-menu-item index="/compliance-check" v-if="userStore.hasCompliancePermission">
           <el-icon><DocumentChecked /></el-icon>
-          <span>文本合规检测</span>
-        </el-menu-item>
-
-        <el-menu-item index="/batch-compliance" v-if="userStore.hasCompliancePermission">
-          <el-icon><FolderOpened /></el-icon>
-          <span>批量合规检测</span>
+          <span>对话合规检测</span>
         </el-menu-item>
 
         <el-menu-item index="/compliance-test" v-if="userStore.hasCompliancePermission">

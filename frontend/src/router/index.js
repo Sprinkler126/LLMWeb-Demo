@@ -28,16 +28,10 @@ const routes = [
         meta: { title: 'API配置管理' }
       },
       {
-        path: 'compliance',
-        name: 'Compliance',
-        component: () => import('@/views/Compliance.vue'),
-        meta: { title: '合规检测(简单)', requiresPermission: true }
-      },
-      {
-        path: 'batch-compliance',
-        name: 'BatchCompliance',
-        component: () => import('@/views/BatchCompliance.vue'),
-        meta: { title: '批量合规检测', requiresPermission: true }
+        path: 'compliance-check',
+        name: 'ComplianceCheck',
+        component: () => import('@/views/ComplianceCheck.vue'),
+        meta: { title: '对话合规检测', requiresPermission: true }
       },
       {
         path: 'compliance-test',
