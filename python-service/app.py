@@ -27,9 +27,9 @@ logger = logging.getLogger(__name__)
 
 # 注册蓝图
 app.register_blueprint(compliance_bp, url_prefix='/api/compliance')
-app.register_blueprint(health_bp)
-app.register_blueprint(scaninfo_bp, url_prefix='/api')
-app.register_blueprint(training_bp)
+app.register_blueprint(health_bp, url_prefix='/api/health')
+app.register_blueprint(scaninfo_bp, url_prefix='/api/scaninfo')
+app.register_blueprint(training_bp, url_prefix='/api/training')
 
 if __name__ == '__main__':
     # 获取配置
@@ -39,7 +39,8 @@ if __name__ == '__main__':
     print("=" * 60)
     print("Python服务启动中...")
     print(f"合规检测接口地址: http://{current_config.HOST}:{current_config.PORT}/api/compliance/check")
-    print(f"信息扫描接口地址: http://{current_config.HOST}:{current_config.PORT}/api/scaninfo")
-    print(f"模型训练接口地址: http://{current_config.HOST}:{current_config.PORT}/api/training")
+    print(f"信息扫描接口地址: http://{current_config.HOST}:{current_config.PORT}/api/scaninfo/scaninfo")
+    print(f"模型训练接口地址: http://{current_config.HOST}:{current_config.PORT}/api/training/start")
+    print(f"健康检查接口地址: http://{current_config.HOST}:{current_config.PORT}/api/health/health")
     print("=" * 60)
     app.run(host=current_config.HOST, port=current_config.PORT, debug=current_config.DEBUG)

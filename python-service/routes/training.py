@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # 创建蓝图
-training_bp = Blueprint('training', __name__, url_prefix='/api/training')
+training_bp = Blueprint('training', __name__)
 
 # 训练服务实例
 training_service = TrainingService()
