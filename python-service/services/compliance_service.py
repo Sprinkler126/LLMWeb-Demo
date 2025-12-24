@@ -132,7 +132,7 @@ def check_with_llm(content, llm_config=None):
             return {
                 "result": "FAIL",
                 "risk_level": "HIGH",
-                "risk_categories": "系统错误",
+                "risk_categories": "系统错误，LLM服务未配置，请设置API URL",
                 "confidence_score": 0.0,
                 "detail": "LLM服务未配置，请设置API URL"
             }
@@ -142,7 +142,7 @@ def check_with_llm(content, llm_config=None):
             return {
                 "result": "FAIL",
                 "risk_level": "HIGH",
-                "risk_categories": "系统错误",
+                "risk_categories": "系统错误，LLM服务未配置，请设置API Key",
                 "confidence_score": 0.0,
                 "detail": "LLM服务未配置，请设置API Key"
             }

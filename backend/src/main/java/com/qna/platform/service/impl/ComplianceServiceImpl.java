@@ -38,8 +38,6 @@ import java.util.*;
 @Service
 public class ComplianceServiceImpl implements ComplianceService {
 
-    @Value("${app.compliance.service-url}")
-    private String complianceServiceUrl;
 
     @Value("${app.compliance.timeout}")
     private int complianceTimeout;
@@ -172,17 +170,17 @@ public class ComplianceServiceImpl implements ComplianceService {
 
             for (ChatMessage message : messages) {
                 try {
-                    String checkResult = callPythonComplianceService(message.getContent());
+                    JSONObject checkResult = complianceClient.checkContent(message.getContent());
                     
                     // 保存检测结果
                     ComplianceResult result = new ComplianceResult();
                     result.setTaskId(taskId);
                     result.setMessageId(message.getId());
                     result.setContent(message.getContent());
-                    result.setDetailResult(checkResult);
-                    
+                    result.setDetailResult(JSONUtil.toJsonStr(checkResult));
+
                     // 解析结果
-                    JSONObject resultJson = JSONUtil.parseObj(checkResult);
+                    JSONObject resultJson=checkResult;
                     String status = resultJson.getStr("result", "PASS");
                     result.setCheckResult(status);
                     result.setRiskLevel(resultJson.getStr("risk_level", "LOW"));
@@ -193,7 +191,7 @@ public class ComplianceServiceImpl implements ComplianceService {
 
                     // 更新消息的合规状态
                     message.setComplianceStatus(status);
-                    message.setComplianceResult(checkResult);
+                    message.setComplianceResult(JSONUtil.toJsonStr(checkResult));
                     messageMapper.updateById(message);
 
                     if ("PASS".equals(status)) {
@@ -240,11 +238,8 @@ public class ComplianceServiceImpl implements ComplianceService {
 
     @Override
     public String checkSingleMessage(String content) {
-        try {
-            return callPythonComplianceService(content);
-        } catch (IOException e) {
-            throw new RuntimeException("调用合规检测服务失败: " + e.getMessage());
-        }
+        JSONObject checkResult = complianceClient.checkContent(content);
+        return JSONUtil.toJsonStr(checkResult);
     }
 
     /**
@@ -263,23 +258,23 @@ public class ComplianceServiceImpl implements ComplianceService {
      *   "detail": "详细说明"
      * }
      */
-    private String callPythonComplianceService(String content) throws IOException {
-        Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("content", content);
-
-        Request request = new Request.Builder()
-                .url(complianceServiceUrl)
-                .post(RequestBody.create(JSONUtil.toJsonStr(requestBody), JSON_MEDIA_TYPE))
-                .addHeader("Content-Type", "application/json")
-                .build();
-
-        try (Response response = httpClient.newCall(request).execute()) {
-            if (!response.isSuccessful()) {
-                throw new IOException("合规检测服务返回错误: " + response.code());
-            }
-            return response.body().string();
-        }
-    }
+//    private String callPythonComplianceService(String content) throws IOException {
+//        Map<String, Object> requestBody = new HashMap<>();
+//        requestBody.put("content", content);
+//
+//        Request request = new Request.Builder()
+//                .url(complianceClient.getCheckUrl())
+//                .post(RequestBody.create(JSONUtil.toJsonStr(requestBody), JSON_MEDIA_TYPE))
+//                .addHeader("Content-Type", "application/json")
+//                .build();
+//
+//        try (Response response = httpClient.newCall(request).execute()) {
+//            if (!response.isSuccessful()) {
+//                throw new IOException("合规检测服务返回错误: " + response.code());
+//            }
+//            return response.body().string();
+//        }
+//    }
 
     /**
      * 从日志加载消息

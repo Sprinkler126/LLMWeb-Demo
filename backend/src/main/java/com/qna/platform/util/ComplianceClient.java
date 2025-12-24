@@ -37,7 +37,7 @@ public class ComplianceClient {
     /**
      * 获取合规检测服务URL
      */
-    private String getCheckUrl() {
+    public String getCheckUrl() {
         try {
             String pythonServiceUrl = systemConfigService.getConfigValue(
                 "python.service.url", "http://localhost:5000");
