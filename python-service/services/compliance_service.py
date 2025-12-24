@@ -1,4 +1,7 @@
 import logging
+import requests
+import json
+from config import config
 
 logger = logging.getLogger(__name__)
 
@@ -95,53 +98,216 @@ def check_with_rules(content):
         "detail": "内容检测通过，未发现敏感词"
     }
 
-def check_with_llm(content):
+def check_with_llm(content, llm_config=None):
     """
     使用大模型进行合规检测
     
-    你需要：
-    1. 配置你的大模型API（OpenAI/Anthropic/本地模型等）
-    2. 设计合适的Prompt来判断内容合规性
-    3. 解析模型返回的结果
+    参数:
+        content: 待检测的内容
+        llm_config: 大模型配置字典，包含以下键:
+            - url: API地址 (可选，默认使用config中的配置)
+            - key: API密钥 (可选，默认使用config中的配置)
+            - model: 模型名称 (可选，默认使用config中的配置)
+            - timeout: 超时时间 (可选，默认使用config中的配置)
+    
+    返回:
+        包含检测结果的字典
     """
-    # TODO: 实现你的大模型调用逻辑
-    # 示例Prompt:
-    prompt = f"""
-    请判断以下文本内容是否合规。评估维度包括：
-    1. 是否包含违法违规信息
-    2. 是否包含色情、暴力、恐怖内容
-    3. 是否包含歧视、仇恨言论
-    4. 是否包含虚假信息或诈骗内容
-    5. 是否包含侵犯隐私的信息
-    
-    请返回JSON格式：
-    {{
-        "result": "PASS" or "FAIL",
-        "risk_level": "LOW" or "MEDIUM" or "HIGH",
-        "risk_categories": "违规类别（逗号分隔）",
-        "detail": "详细说明"
-    }}
-    
-    待检测内容：
-    {content}
-    """
-    
-    # 这里是示例返回，实际需要调用你的大模型API
-    return {
-        "result": "FAIL",
-        "risk_level": "LOW",
-        "risk_categories": "",
-        "confidence_score": 0.1,
-        "detail": "大模型暂未实现，默认内容违规"
-    }
+    try:
+        # 获取配置
+        if llm_config is None:
+            llm_config = {}
+        
+        # 从配置中获取默认值
+        default_config = config.get('default', config['development'])
+        
+        url = llm_config.get('url', default_config.LLM_DEFAULT_URL)
+        key = llm_config.get('key', default_config.LLM_DEFAULT_KEY)
+        model = llm_config.get('model', default_config.LLM_DEFAULT_MODEL)
+        timeout = llm_config.get('timeout', default_config.LLM_DEFAULT_TIMEOUT)
+        
+        # 检查必要配置
+        if not url:
+            logger.error("未配置LLM API URL")
+            return {
+                "result": "FAIL",
+                "risk_level": "HIGH",
+                "risk_categories": "系统错误",
+                "confidence_score": 0.0,
+                "detail": "LLM服务未配置，请设置API URL"
+            }
+        
+        if not key:
+            logger.error("未配置LLM API Key")
+            return {
+                "result": "FAIL",
+                "risk_level": "HIGH",
+                "risk_categories": "系统错误",
+                "confidence_score": 0.0,
+                "detail": "LLM服务未配置，请设置API Key"
+            }
+        
+        # 构建Prompt
+        prompt = f"""
+        请判断以下文本内容是否合规。评估维度包括：
+        1. 是否包含违法违规信息
+        2. 是否包含色情、暴力、恐怖内容
+        3. 是否包含歧视、仇恨言论
+        4. 是否包含虚假信息或诈骗内容
+        5. 是否包含侵犯隐私的信息
+        
+        请严格遵守以下JSON格式返回，不要包含任何额外文本：
+        {{
+            "result": "PASS" or "FAIL",
+            "risk_level": "LOW" or "MEDIUM" or "HIGH",
+            "risk_categories": "违规类别（逗号分隔）",
+            "detail": "详细说明"
+        }}
+        
+        待检测内容：
+        {content}
+        """
+        
+        # 构建请求数据
+        request_data = {
+            "model": model,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "你是一个专业的合规检测助手，负责判断文本内容是否符合安全规范。请严格按照JSON格式返回结果。"
+                },
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            "temperature": 0.1,
+            "max_tokens": 500
+        }
+        
+        # 设置请求头
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {key}"
+        }
+        
+        logger.info(f"调用LLM API - URL: {url}, Model: {model}")
+        
+        # 发送请求
+        response = requests.post(
+            url,
+            json=request_data,
+            headers=headers,
+            timeout=timeout
+        )
+        
+        # 检查响应状态
+        if response.status_code != 200:
+            logger.error(f"LLM API返回错误状态码: {response.status_code}, 响应: {response.text}")
+            return {
+                "result": "FAIL",
+                "risk_level": "MEDIUM",
+                "risk_categories": "系统错误",
+                "confidence_score": 0.0,
+                "detail": f"LLM服务调用失败: {response.status_code}"
+            }
+        
+        # 解析响应
+        response_data = response.json()
+        
+        # 提取模型返回的内容
+        if 'choices' in response_data and len(response_data['choices']) > 0:
+            content_text = response_data['choices'][0]['message']['content']
+            
+            # 尝试解析JSON
+            try:
+                # 清理响应内容，移除可能的Markdown代码块标记
+                content_text = content_text.strip()
+                if content_text.startswith('```json'):
+                    content_text = content_text[7:]
+                if content_text.endswith('```'):
+                    content_text = content_text[:-3]
+                content_text = content_text.strip()
+                
+                result_data = json.loads(content_text)
+                
+                # 验证返回的数据结构
+                required_fields = ['result', 'risk_level', 'risk_categories', 'detail']
+                for field in required_fields:
+                    if field not in result_data:
+                        logger.warning(f"LLM返回缺少字段 {field}")
+                        result_data[field] = ""
+                
+                # 添加置信度
+                if result_data.get('result') == 'FAIL':
+                    result_data['confidence_score'] = 0.85
+                else:
+                    result_data['confidence_score'] = 0.95
+                
+                logger.info(f"LLM检测完成 - 结果: {result_data.get('result')}, 风险等级: {result_data.get('risk_level')}")
+                return result_data
+                
+            except json.JSONDecodeError as e:
+                logger.error(f"解析LLM响应JSON失败: {e}, 原始内容: {content_text}")
+                return {
+                    "result": "FAIL",
+                    "risk_level": "MEDIUM",
+                    "risk_categories": "系统错误",
+                    "confidence_score": 0.0,
+                    "detail": f"解析LLM响应失败: {str(e)}"
+                }
+        else:
+            logger.error(f"LLM响应格式异常: {response_data}")
+            return {
+                "result": "FAIL",
+                "risk_level": "MEDIUM",
+                "risk_categories": "系统错误",
+                "confidence_score": 0.0,
+                "detail": "LLM响应格式异常"
+            }
+            
+    except requests.exceptions.Timeout:
+        logger.error("LLM API调用超时")
+        return {
+            "result": "FAIL",
+            "risk_level": "MEDIUM",
+            "risk_categories": "系统错误",
+            "confidence_score": 0.0,
+            "detail": "LLM服务调用超时"
+        }
+        
+    except requests.exceptions.ConnectionError:
+        logger.error("LLM API连接失败")
+        return {
+            "result": "FAIL",
+            "risk_level": "HIGH",
+            "risk_categories": "系统错误",
+            "confidence_score": 0.0,
+            "detail": "无法连接到LLM服务，请检查网络或服务地址"
+        }
+        
+    except Exception as e:
+        logger.error(f"LLM检测发生未知错误: {str(e)}", exc_info=True)
+        return {
+            "result": "FAIL",
+            "risk_level": "HIGH",
+            "risk_categories": "系统错误",
+            "confidence_score": 0.0,
+            "detail": f"LLM检测发生错误: {str(e)}"
+        }
 
-def check_compliance(content, mode='moderate'):
+def check_compliance(content, mode='moderate', llm_config=None):
     """
     合规检测主函数
     支持三种模式:
     - loose (宽松): 只检查敏感词
     - strict (严格): 先检查敏感词，再用大模型检查
     - moderate (默认): 先检查敏感词，如果有敏感词再用大模型二次检查
+    
+    参数:
+        content: 待检测的内容
+        mode: 检测模式 ('loose', 'strict', 'moderate')
+        llm_config: 大模型配置字典，用于传递给check_with_llm函数
     """
     # 根据不同模式执行检查
     if mode == 'loose':
@@ -151,7 +317,7 @@ def check_compliance(content, mode='moderate'):
         # 严格模式：先检查敏感词，再用大模型检查
         rule_result = check_with_rules(content)
         # 即使敏感词检查通过，也使用大模型进一步检查
-        llm_result = check_with_llm(content)
+        llm_result = check_with_llm(content, llm_config)
         
         # 综合两个结果，取更严格的那个
         if rule_result['result'] == 'FAIL' or llm_result['result'] == 'FAIL':
@@ -174,7 +340,7 @@ def check_compliance(content, mode='moderate'):
         rule_result = check_with_rules(content)
         if rule_result['result'] == 'FAIL':
             # 如果敏感词检查失败，使用大模型二次确认
-            llm_result = check_with_llm(content)
+            llm_result = check_with_llm(content, llm_config)
             # 以大模型结果为准
             result = llm_result
         else:

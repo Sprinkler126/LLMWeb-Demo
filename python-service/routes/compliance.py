@@ -20,11 +20,18 @@ def check_compliance_route():
     - loose (宽松): 只检查敏感词
     - strict (严格): 先检查敏感词，再用大模型检查
     - moderate (默认): 先检查敏感词，如果有敏感词再用大模型二次检查
+    
+    支持传入llm_config参数自定义大模型配置:
+    - url: API地址
+    - key: API密钥
+    - model: 模型名称
+    - timeout: 超时时间
     """
     try:
         data = request.get_json()
         content = data.get('content', '')
         mode = data.get('mode', 'moderate')  # 默认为适度检查
+        llm_config = data.get('llmConfig', {})  # 大模型配置
         
         if not content:
             return jsonify({
@@ -34,7 +41,7 @@ def check_compliance_route():
         logger.info(f"收到检测请求，内容长度: {len(content)}, 检查模式: {mode}")
         
         # 调用服务层函数执行检查
-        result = check_compliance(content, mode)
+        result = check_compliance(content, mode, llm_config)
         
         logger.info(f"检测完成，结果: {result['result']}")
         
