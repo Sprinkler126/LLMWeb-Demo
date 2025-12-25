@@ -106,13 +106,16 @@ public class ChatServiceImpl implements ChatService {
             }
         }
 
-        // 保存用户消息
+        // 保存用户消息（使用displayMessage如果提供了，否则使用完整message）
         ChatMessage userMessage = new ChatMessage();
         userMessage.setSessionId(session.getId());
         userMessage.setUserId(userId);
         userMessage.setApiConfigId(requestDTO.getApiConfigId());
         userMessage.setRole("user");
-        userMessage.setContent(requestDTO.getMessage());
+        // 优先使用displayMessage（只包含文件名），如果没有则使用完整message
+        userMessage.setContent(StrUtil.isNotBlank(requestDTO.getDisplayMessage()) 
+                ? requestDTO.getDisplayMessage() 
+                : requestDTO.getMessage());
         userMessage.setComplianceStatus(ComplianceStatus.UNCHECKED.name());
         messageMapper.insert(userMessage);
         

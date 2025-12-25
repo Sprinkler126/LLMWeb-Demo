@@ -24,10 +24,15 @@ public class ChatRequestDTO {
     private Long apiConfigId;
 
     /**
-     * 用户消息内容
+     * 用户消息内容（包含文件完整内容，发送给AI）
      */
     @NotBlank(message = "消息内容不能为空")
     private String message;
+    
+    /**
+     * 显示用的消息内容（只包含文件名，保存到数据库并显示给用户）
+     */
+    private String displayMessage;
 
     /**
      * 会话标题（新建会话时使用）

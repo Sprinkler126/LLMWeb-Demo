@@ -182,7 +182,16 @@
             
             <div class="input-footer">
               <div class="input-actions">
-                <span class="input-tip">Ctrl + Enter 发送 | 支持 Markdown</span>
+                <span class="input-tip">
+                  Ctrl + Enter 发送 | 支持 Markdown
+                  <span 
+                    v-if="totalContentLength > 0" 
+                    :class="['content-length', totalContentLength > 200000 ? 'length-warning' : '']"
+                  >
+                     | {{ (totalContentLength / 1024).toFixed(2) }} KB
+                    <span v-if="totalContentLength > 200000"> (超出限制)</span>
+                  </span>
+                </span>
                 <el-upload
                   ref="uploadRef"
                   :auto-upload="false"
@@ -215,7 +224,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, nextTick, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Delete, Loading, Promotion, QuestionFilled, Paperclip, Document } from '@element-plus/icons-vue'
 import { getUserSessions, getSessionHistory, sendMessage as sendMessageApi, deleteSession, uploadFiles } from '@/api/chat'
@@ -257,6 +266,15 @@ const messageListRef = ref(null)
 const uploadedFiles = ref([])
 const uploading = ref(false)
 const uploadRef = ref(null)
+
+// 计算总内容长度（输入 + 所有文件内容）
+const totalContentLength = computed(() => {
+  let total = inputMessage.value.length
+  uploadedFiles.value.forEach(file => {
+    total += file.content.length
+  })
+  return total
+})
 
 onMounted(() => {
   loadSessions()
@@ -323,13 +341,67 @@ const sendMessage = async () => {
     return
   }
 
-  // 构建消息内容：用户输入 + 文件内容
-  let messageContent = inputMessage.value
+  // 构建完整消息内容（发送给AI）：用户输入 + 文件内容
+  let fullMessageContent = inputMessage.value
   
-  if (uploadedFiles.value.length > 0) {
-    messageContent += '\n\n--- 附件内容 ---\n'
-    uploadedFiles.value.forEach(file => {
-      messageContent += `\n【文件: ${file.fileName}】\n${file.content}\n`
+  // 计算总文本长度（输入 + 所有文件内容）
+  let totalLength = inputMessage.value.length
+  const filesInfo = [...uploadedFiles.value]
+  
+  filesInfo.forEach(file => {
+    totalLength += file.content.length
+  })
+  
+  // 检查总长度限制（200KB = 200,000字符）
+  const MAX_LENGTH = 200000
+  if (totalLength > MAX_LENGTH) {
+    ElMessageBox.confirm(
+      `消息总长度为 ${(totalLength / 1024).toFixed(2)} KB，超过了 ${(MAX_LENGTH / 1024).toFixed(0)} KB 的限制。\n\n是否自动截断内容并继续发送？`,
+      '消息内容过长',
+      {
+        confirmButtonText: '截断并发送',
+        cancelButtonText: '取消',
+        type: 'warning',
+        distinguishCancelAndClose: true
+      }
+    ).then(() => {
+      // 用户选择截断，继续发送
+      doSendMessage(true, filesInfo)
+    }).catch(() => {
+      // 用户取消，不发送
+      ElMessage.info('已取消发送')
+    })
+    return
+  }
+  
+  // 长度正常，直接发送
+  doSendMessage(false, filesInfo)
+}
+
+// 实际发送消息的函数
+const doSendMessage = async (shouldTruncate, filesInfo) => {
+  // 构建完整消息内容（发送给AI）
+  let fullMessageContent = inputMessage.value
+  
+  if (filesInfo.length > 0) {
+    fullMessageContent += '\n\n--- 附件内容 ---\n'
+    filesInfo.forEach(file => {
+      let content = file.content
+      // 如果需要截断，限制每个文件内容为50KB
+      if (shouldTruncate && content.length > 50000) {
+        content = content.substring(0, 50000) + '\n\n[内容过长，已截断]'
+      }
+      fullMessageContent += `\n【文件: ${file.fileName}】\n${content}\n`
+    })
+  }
+  
+  // 构建用户可见的消息内容（只显示文件名）
+  let displayMessageContent = inputMessage.value
+  
+  if (filesInfo.length > 0) {
+    displayMessageContent += '\n\n📎 附件：'
+    filesInfo.forEach((file, index) => {
+      displayMessageContent += `\n${index + 1}. ${file.fileName} (${formatFileSize(file.fileSize)})`
     })
   }
 
@@ -337,8 +409,18 @@ const sendMessage = async () => {
   inputMessage.value = ''
   
   // 清空已上传的文件
-  const filesInfo = [...uploadedFiles.value]
   uploadedFiles.value = []
+  
+  // 立即显示用户消息气泡
+  const tempUserMessage = {
+    id: Date.now(), // 临时ID
+    role: 'user',
+    content: displayMessageContent,
+    createdTime: new Date().toISOString(),
+    complianceStatus: 'UNCHECKED'
+  }
+  messages.value.push(tempUserMessage)
+  scrollToBottom()
   
   loading.value = true
 
@@ -346,7 +428,8 @@ const sendMessage = async () => {
     const res = await sendMessageApi({
       sessionId: currentSessionId.value,
       apiConfigId: selectedApiId.value,
-      message: messageContent,
+      message: fullMessageContent, // 发送完整内容给AI
+      displayMessage: displayMessageContent, // 显示用的内容（只含文件名）
       sessionTitle: userMessage.substring(0, 30) || '文件对话',
       botTemplateId: selectedBotId.value
     })
@@ -357,7 +440,7 @@ const sendMessage = async () => {
       await loadSessions()
     }
 
-    // 重新加载消息
+    // 重新加载消息（会替换临时消息）
     await selectSession(currentSessionId.value)
 
     // 更新API使用量
@@ -366,8 +449,15 @@ const sendMessage = async () => {
     scrollToBottom()
   } catch (error) {
     console.error(error)
-    // 恢复文件列表
+    // 发送失败，移除临时消息
+    const tempIndex = messages.value.findIndex(m => m.id === tempUserMessage.id)
+    if (tempIndex !== -1) {
+      messages.value.splice(tempIndex, 1)
+    }
+    // 恢复输入和文件列表
+    inputMessage.value = userMessage
     uploadedFiles.value = filesInfo
+    ElMessage.error('发送失败，请重试')
   } finally {
     loading.value = false
   }
@@ -767,6 +857,19 @@ const formatTime = (time) => {
 .input-tip {
   font-size: 12px;
   color: #909399;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.content-length {
+  font-weight: 500;
+  color: #409eff;
+}
+
+.length-warning {
+  color: #f56c6c;
+  font-weight: 600;
 }
 
 .uploaded-files {
