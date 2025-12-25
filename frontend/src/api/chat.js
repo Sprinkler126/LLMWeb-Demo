@@ -40,3 +40,22 @@ export function deleteSession(sessionId) {
     method: 'delete'
   })
 }
+
+/**
+ * 上传文件并提取文本
+ */
+export function uploadFiles(files) {
+  const formData = new FormData()
+  files.forEach(file => {
+    formData.append('files', file)
+  })
+  
+  return request({
+    url: '/chat/upload-files',
+    method: 'post',
+    data: formData,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}

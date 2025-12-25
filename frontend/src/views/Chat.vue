@@ -162,15 +162,45 @@
               v-model="inputMessage"
               type="textarea"
               :rows="3"
-              placeholder="输入你的问题... (支持 Markdown 格式)"
+              placeholder="输入你的问题... (支持 Markdown 格式和文件上传)"
               @keydown.enter.ctrl="sendMessage"
             />
+            
+            <!-- 文件上传区域 -->
+            <div v-if="uploadedFiles.length > 0" class="uploaded-files">
+              <el-tag
+                v-for="(file, index) in uploadedFiles"
+                :key="index"
+                closable
+                @close="removeFile(index)"
+                class="file-tag"
+              >
+                <el-icon><Document /></el-icon>
+                {{ file.fileName }} ({{ formatFileSize(file.fileSize) }})
+              </el-tag>
+            </div>
+            
             <div class="input-footer">
-              <span class="input-tip">Ctrl + Enter 发送 | 支持 Markdown</span>
+              <div class="input-actions">
+                <span class="input-tip">Ctrl + Enter 发送 | 支持 Markdown</span>
+                <el-upload
+                  ref="uploadRef"
+                  :auto-upload="false"
+                  :show-file-list="false"
+                  :on-change="handleFileChange"
+                  :accept="'.txt,.md,.log,.json,.xml,.csv,.java,.py,.js,.ts,.html,.css,.yml,.yaml,.properties'"
+                  multiple
+                  :limit="10"
+                >
+                  <el-button size="small" :icon="Paperclip" :loading="uploading">
+                    {{ uploading ? '上传中...' : '上传文件' }}
+                  </el-button>
+                </el-upload>
+              </div>
               <el-button
                 type="primary"
                 :loading="loading"
-                :disabled="!inputMessage.trim() || (!currentSessionId && !selectedApiId)"
+                :disabled="(!inputMessage.trim() && uploadedFiles.length === 0) || (!currentSessionId && !selectedApiId)"
                 @click="sendMessage"
               >
                 <el-icon><Promotion /></el-icon>
@@ -187,8 +217,8 @@
 <script setup>
 import { ref, onMounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Delete, Loading, Promotion, QuestionFilled } from '@element-plus/icons-vue'
-import { getUserSessions, getSessionHistory, sendMessage as sendMessageApi, deleteSession } from '@/api/chat'
+import { Plus, Delete, Loading, Promotion, QuestionFilled, Paperclip, Document } from '@element-plus/icons-vue'
+import { getUserSessions, getSessionHistory, sendMessage as sendMessageApi, deleteSession, uploadFiles } from '@/api/chat'
 import { getEnabledConfigs } from '@/api/apiConfig'
 import { getEnabledTemplates } from '@/api/botTemplate'
 import { useUserStore } from '@/store/user'
@@ -224,6 +254,9 @@ const selectedBotId = ref(null)
 const inputMessage = ref('')
 const loading = ref(false)
 const messageListRef = ref(null)
+const uploadedFiles = ref([])
+const uploading = ref(false)
+const uploadRef = ref(null)
 
 onMounted(() => {
   loadSessions()
@@ -281,7 +314,7 @@ const createNewSession = () => {
 }
 
 const sendMessage = async () => {
-  if (!inputMessage.value.trim()) {
+  if (!inputMessage.value.trim() && uploadedFiles.value.length === 0) {
     return
   }
 
@@ -290,16 +323,31 @@ const sendMessage = async () => {
     return
   }
 
+  // 构建消息内容：用户输入 + 文件内容
+  let messageContent = inputMessage.value
+  
+  if (uploadedFiles.value.length > 0) {
+    messageContent += '\n\n--- 附件内容 ---\n'
+    uploadedFiles.value.forEach(file => {
+      messageContent += `\n【文件: ${file.fileName}】\n${file.content}\n`
+    })
+  }
+
   const userMessage = inputMessage.value
   inputMessage.value = ''
+  
+  // 清空已上传的文件
+  const filesInfo = [...uploadedFiles.value]
+  uploadedFiles.value = []
+  
   loading.value = true
 
   try {
     const res = await sendMessageApi({
       sessionId: currentSessionId.value,
       apiConfigId: selectedApiId.value,
-      message: userMessage,
-      sessionTitle: userMessage.substring(0, 30),
+      message: messageContent,
+      sessionTitle: userMessage.substring(0, 30) || '文件对话',
       botTemplateId: selectedBotId.value
     })
 
@@ -318,9 +366,59 @@ const sendMessage = async () => {
     scrollToBottom()
   } catch (error) {
     console.error(error)
+    // 恢复文件列表
+    uploadedFiles.value = filesInfo
   } finally {
     loading.value = false
   }
+}
+
+// 处理文件选择
+const handleFileChange = async (uploadFile) => {
+  const file = uploadFile.raw
+  
+  // 检查文件大小（10MB）
+  if (file.size > 10 * 1024 * 1024) {
+    ElMessage.error(`文件 ${file.name} 超过10MB限制`)
+    return
+  }
+  
+  // 检查文件数量
+  if (uploadedFiles.value.length >= 10) {
+    ElMessage.warning('最多只能上传10个文件')
+    return
+  }
+  
+  uploading.value = true
+  
+  try {
+    const res = await uploadFiles([file])
+    const result = res.data[0]
+    
+    if (result.success) {
+      uploadedFiles.value.push(result)
+      ElMessage.success(`文件 ${result.fileName} 上传成功`)
+    } else {
+      ElMessage.error(`文件 ${result.fileName} 上传失败: ${result.errorMessage}`)
+    }
+  } catch (error) {
+    console.error('文件上传失败:', error)
+    ElMessage.error(`文件 ${file.name} 上传失败`)
+  } finally {
+    uploading.value = false
+  }
+}
+
+// 移除文件
+const removeFile = (index) => {
+  uploadedFiles.value.splice(index, 1)
+}
+
+// 格式化文件大小
+const formatFileSize = (bytes) => {
+  if (bytes < 1024) return bytes + ' B'
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB'
+  return (bytes / (1024 * 1024)).toFixed(2) + ' MB'
 }
 
 const deleteSessionConfirm = (sessionId) => {
@@ -660,8 +758,31 @@ const formatTime = (time) => {
   margin-top: 10px;
 }
 
+.input-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .input-tip {
   font-size: 12px;
   color: #909399;
+}
+
+.uploaded-files {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.file-tag {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.file-tag .el-icon {
+  font-size: 14px;
 }
 </style>
